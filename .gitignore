@@ -10,6 +10,7 @@ secrets.*.json
 *.secrets.json
 appsettings.Development.json
 !.vscode/launch.json
+docker-compose.yml
 
 # User-specific files
 *.rsuser
