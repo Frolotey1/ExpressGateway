@@ -1,0 +1,52 @@
+<response xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:noNamespaceSchemaLocation="http://www.aviationweather.gov/static/adds/schema/taf1_2.xsd">
+<request_index>236910697</request_index>
+<data_source name="tafs"/>
+<request type="retrieve"/>
+<errors/>
+<warnings/>
+<time_taken_ms>8</time_taken_ms>
+<data num_results="10">
+<TAF>
+<raw_text>TAF USSS 201051Z 2012/2112 27003G10MPS 9999 SCT020 BECMG 2015/2017 6000 BECMG 2106/2109 9999</raw_text>
+<station_id>USSS</station_id>
+<issue_time>2022-11-20T10:51:00Z</issue_time>
+<bulletin_time>2022-11-20T11:00:00Z</bulletin_time>
+<valid_time_from>2022-11-20T12:00:00Z</valid_time_from>
+<valid_time_to>2022-11-21T12:00:00Z</valid_time_to>
+<latitude>56.75</latitude>
+<longitude>60.78</longitude>
+<elevation_m>222.0</elevation_m>
+<forecast>
+<fcst_time_from>2022-11-20T12:00:00Z</fcst_time_from>
+<fcst_time_to>2022-11-20T15:00:00Z</fcst_time_to>
+<wind_dir_degrees>270</wind_dir_degrees>
+<wind_speed_kt>6</wind_speed_kt>
+<wind_gust_kt>19</wind_gust_kt>
+<visibility_statute_mi>6.21</visibility_statute_mi>
+<sky_condition sky_cover="SCT" cloud_base_ft_agl="2000"/>
+</forecast>
+<forecast>
+<fcst_time_from>2022-11-20T15:00:00Z</fcst_time_from>
+<fcst_time_to>2022-11-21T06:00:00Z</fcst_time_to>
+<change_indicator>BECMG</change_indicator>
+<time_becoming>2022-11-20T17:00:00Z</time_becoming>
+<wind_dir_degrees>270</wind_dir_degrees>
+<wind_speed_kt>6</wind_speed_kt>
+<wind_gust_kt>19</wind_gust_kt>
+<visibility_statute_mi>3.73</visibility_statute_mi>
+<sky_condition sky_cover="SCT" cloud_base_ft_agl="2000"/>
+</forecast>
+<forecast>
+<fcst_time_from>2022-11-21T06:00:00Z</fcst_time_from>
+<fcst_time_to>2022-11-21T12:00:00Z</fcst_time_to>
+<change_indicator>BECMG</change_indicator>
+<time_becoming>2022-11-21T09:00:00Z</time_becoming>
+<wind_dir_degrees>270</wind_dir_degrees>
+<wind_speed_kt>6</wind_speed_kt>
+<wind_gust_kt>19</wind_gust_kt>
+<visibility_statute_mi>6.21</visibility_statute_mi>
+<sky_condition sky_cover="SCT" cloud_base_ft_agl="2000"/>
+</forecast>
+</TAF>
+</data>
+</response>

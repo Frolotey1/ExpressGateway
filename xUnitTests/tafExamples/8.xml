@@ -1,0 +1,77 @@
+<response xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:noNamespaceSchemaLocation="http://www.aviationweather.gov/static/adds/schema/taf1_2.xsd">
+	<request_index>863993842</request_index>
+	<data_source name="tafs"/>
+	<request type="retrieve"/>
+	<errors/>
+	<warnings/>
+	<time_taken_ms>10</time_taken_ms>
+	<data num_results="10">
+		<TAF>
+			<raw_text>TAF USSS 110754Z 1109/1209 13003G13MPS 6000 -SHRA BKN016CB TEMPO 1109/1112 VV005 BECMG 1112/1113 25005G15MPS 9999 -SHRA FM111800 21003G08MPS 6000 BKN016 TEMPO 1118/1203 0500 FG BECMG 1204/1206 17003G12MPS 9999</raw_text>
+			<station_id>USSS</station_id>
+			<issue_time>2022-05-11T07:54:00Z</issue_time>
+			<bulletin_time>2022-05-11T08:00:00Z</bulletin_time>
+			<valid_time_from>2022-05-11T09:00:00Z</valid_time_from>
+			<valid_time_to>2022-05-12T09:00:00Z</valid_time_to>
+			<latitude>56.75</latitude>
+			<longitude>60.78</longitude>
+			<elevation_m>222.0</elevation_m>
+			<forecast>
+				<fcst_time_from>2022-05-11T09:00:00Z</fcst_time_from>
+				<wind_dir_degrees>130</wind_dir_degrees>
+				<wind_speed_kt>6</wind_speed_kt>
+				<wind_gust_kt>25</wind_gust_kt>
+				<visibility_statute_mi>3.73</visibility_statute_mi>
+				<wx_string>-SHRA</wx_string>
+				<sky_condition sky_cover="BKN" cloud_base_ft_agl="1600" cloud_type="CB"/>
+			</forecast>
+			<forecast>
+				<fcst_time_from>2022-05-11T09:00:00Z</fcst_time_from>
+				<fcst_time_to>2022-05-11T12:00:00Z</fcst_time_to>
+				<change_indicator>TEMPO</change_indicator>
+				<vert_vis_ft>500</vert_vis_ft>
+				<sky_condition sky_cover="OVX"/>
+			</forecast>
+			<forecast>
+				<fcst_time_from>2022-05-11T12:00:00Z</fcst_time_from>
+				<fcst_time_to>2022-05-11T18:00:00Z</fcst_time_to>
+				<change_indicator>BECMG</change_indicator>
+				<time_becoming>2022-05-11T13:00:00Z</time_becoming>
+				<wind_dir_degrees>250</wind_dir_degrees>
+				<wind_speed_kt>10</wind_speed_kt>
+				<wind_gust_kt>29</wind_gust_kt>
+				<visibility_statute_mi>6.21</visibility_statute_mi>
+				<wx_string>-SHRA</wx_string>
+				<sky_condition sky_cover="BKN" cloud_base_ft_agl="1600" cloud_type="CB"/>
+			</forecast>
+			<forecast>
+				<fcst_time_from>2022-05-11T18:00:00Z</fcst_time_from>
+				<fcst_time_to>2022-05-12T04:00:00Z</fcst_time_to>
+				<change_indicator>FM</change_indicator>
+				<wind_dir_degrees>210</wind_dir_degrees>
+				<wind_speed_kt>6</wind_speed_kt>
+				<wind_gust_kt>16</wind_gust_kt>
+				<visibility_statute_mi>3.73</visibility_statute_mi>
+				<sky_condition sky_cover="BKN" cloud_base_ft_agl="1600"/>
+			</forecast>
+			<forecast>
+				<fcst_time_from>2022-05-11T18:00:00Z</fcst_time_from>
+				<fcst_time_to>2022-05-12T03:00:00Z</fcst_time_to>
+				<change_indicator>TEMPO</change_indicator>
+				<visibility_statute_mi>0.31</visibility_statute_mi>
+				<wx_string>FG</wx_string>
+			</forecast>
+			<forecast>
+				<fcst_time_from>2022-05-12T04:00:00Z</fcst_time_from>
+				<fcst_time_to>2022-05-12T09:00:00Z</fcst_time_to>
+				<change_indicator>BECMG</change_indicator>
+				<time_becoming>2022-05-12T06:00:00Z</time_becoming>
+				<wind_dir_degrees>170</wind_dir_degrees>
+				<wind_speed_kt>6</wind_speed_kt>
+				<wind_gust_kt>23</wind_gust_kt>
+				<visibility_statute_mi>6.21</visibility_statute_mi>
+				<sky_condition sky_cover="BKN" cloud_base_ft_agl="1600"/>
+			</forecast>
+		</TAF>
+	</data>
+</response>

@@ -1,0 +1,51 @@
+<response xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:noNamespaceSchemaLocation="http://www.aviationweather.gov/static/adds/schema/taf1_2.xsd">
+<request_index>236910697</request_index>
+<data_source name="tafs"/>
+<request type="retrieve"/>
+<errors/>
+<warnings/>
+<time_taken_ms>8</time_taken_ms>
+<data num_results="10">
+<TAF>
+<raw_text>TAF AMD USSS 211120Z 2112/2212 11006G16MPS 1600 SHSN BLSN BKN011CB TEMPO 2112/2120 0700 +SHSN VV004 FM212000 23003G08MPS 6000 -SHSN BKN016CB</raw_text>
+<station_id>USSS</station_id>
+<issue_time>2023-02-21T11:20:00Z</issue_time>
+<bulletin_time>2023-02-21T11:00:00Z</bulletin_time>
+<valid_time_from>2023-02-21T12:00:00Z</valid_time_from>
+<valid_time_to>2023-02-22T12:00:00Z</valid_time_to>
+<latitude>56.75</latitude>
+<longitude>60.78</longitude>
+<elevation_m>222.0</elevation_m>
+<forecast>
+<fcst_time_from>2023-02-21T12:00:00Z</fcst_time_from>
+<fcst_time_to>2023-02-21T20:00:00Z</fcst_time_to>
+<wind_dir_degrees>110</wind_dir_degrees>
+<wind_speed_kt>12</wind_speed_kt>
+<wind_gust_kt>31</wind_gust_kt>
+<visibility_statute_mi>0.99</visibility_statute_mi>
+<wx_string>SHSN BLSN</wx_string>
+<sky_condition sky_cover="BKN" cloud_base_ft_agl="1100" cloud_type="CB"/>
+</forecast>
+<forecast>
+<fcst_time_from>2023-02-21T12:00:00Z</fcst_time_from>
+<fcst_time_to>2023-02-21T20:00:00Z</fcst_time_to>
+<change_indicator>TEMPO</change_indicator>
+<visibility_statute_mi>0.43</visibility_statute_mi>
+<vert_vis_ft>400</vert_vis_ft>
+<wx_string>+SHSN</wx_string>
+<sky_condition sky_cover="OVX"/>
+</forecast>
+<forecast>
+<fcst_time_from>2023-02-21T20:00:00Z</fcst_time_from>
+<fcst_time_to>2023-02-22T12:00:00Z</fcst_time_to>
+<change_indicator>FM</change_indicator>
+<wind_dir_degrees>230</wind_dir_degrees>
+<wind_speed_kt>6</wind_speed_kt>
+<wind_gust_kt>16</wind_gust_kt>
+<visibility_statute_mi>3.73</visibility_statute_mi>
+<wx_string>-SHSN</wx_string>
+<sky_condition sky_cover="BKN" cloud_base_ft_agl="1600" cloud_type="CB"/>
+</forecast>
+</TAF>
+</data>
+</response>

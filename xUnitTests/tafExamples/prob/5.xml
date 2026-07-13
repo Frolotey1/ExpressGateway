@@ -1,0 +1,45 @@
+<response xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:noNamespaceSchemaLocation="http://www.aviationweather.gov/static/adds/schema/taf1_2.xsd">
+<request_index>236910697</request_index>
+<data_source name="tafs"/>
+<request type="retrieve"/>
+<errors/>
+<warnings/>
+<time_taken_ms>8</time_taken_ms>
+<data num_results="10">
+<TAF>
+<raw_text>TAF USSS 231050Z 2312/2412 16003MPS 9999 OVC011 TXM02/2411Z TNM07/2403Z TEMPO 2312/2318 OVC004 PROB40 TEMPO 2318/2406 0300 FZFG OVC002</raw_text>
+<station_id>USSS</station_id>
+<issue_time>2023-01-23T10:50:00Z</issue_time>
+<bulletin_time>2023-01-23T11:00:00Z</bulletin_time>
+<valid_time_from>2023-01-23T12:00:00Z</valid_time_from>
+<valid_time_to>2023-01-24T12:00:00Z</valid_time_to>
+<latitude>55.6</latitude>
+<longitude>37.27</longitude>
+<elevation_m>195.0</elevation_m>
+<forecast>
+<fcst_time_from>2023-01-23T12:00:00Z</fcst_time_from>
+<fcst_time_to>2023-01-24T12:00:00Z</fcst_time_to>
+<wind_dir_degrees>160</wind_dir_degrees>
+<wind_speed_kt>6</wind_speed_kt>
+<visibility_statute_mi>6.21</visibility_statute_mi>
+<sky_condition sky_cover="OVC" cloud_base_ft_agl="1100"/>
+</forecast>
+<forecast>
+<fcst_time_from>2023-01-23T12:00:00Z</fcst_time_from>
+<fcst_time_to>2023-01-23T18:00:00Z</fcst_time_to>
+<change_indicator>TEMPO</change_indicator>
+<not_decoded>TXM02/2411Z TNM07/2403Z</not_decoded>
+<sky_condition sky_cover="OVC" cloud_base_ft_agl="400"/>
+</forecast>
+<forecast>
+<fcst_time_from>2023-01-23T18:00:00Z</fcst_time_from>
+<fcst_time_to>2023-01-24T06:00:00Z</fcst_time_to>
+<change_indicator>TEMPO</change_indicator>
+<probability>40</probability>
+<visibility_statute_mi>0.19</visibility_statute_mi>
+<wx_string>FZFG</wx_string>
+<sky_condition sky_cover="OVC" cloud_base_ft_agl="200"/>
+</forecast>
+</TAF>
+</data>
+</response>

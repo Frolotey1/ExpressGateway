@@ -1,0 +1,74 @@
+<response xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:noNamespaceSchemaLocation="http://www.aviationweather.gov/static/adds/schema/taf1_2.xsd">
+<request_index>863993842</request_index>
+<data_source name="tafs"/>
+<request type="retrieve"/>
+<errors/>
+<warnings/>
+<time_taken_ms>10</time_taken_ms>
+<data num_results="10">
+<TAF>
+<raw_text>TAF UHPP 240731Z 2409/2515 35003G10MPS 9999 SCT030 TXM02/2509Z TNM20/2411Z BECMG 2420/2422 06008MPS BKN012CB FM250300 08013G25MPS 2500 -SHSN BLSN BKN007 OVC015CB TEMPO 2503/2506 0500 +SHSN BLSN VV002 FM250800 05018G33MPS 0700 +SHSN BLSN VV///</raw_text>
+<station_id>UHPP</station_id>
+<issue_time>2023-01-24T07:31:00Z</issue_time>
+<bulletin_time>2023-01-24T08:00:00Z</bulletin_time>
+<valid_time_from>2023-01-24T09:00:00Z</valid_time_from>
+<valid_time_to>2023-01-25T15:00:00Z</valid_time_to>
+<latitude>53.17</latitude>
+<longitude>158.45</longitude>
+<elevation_m>33.0</elevation_m>
+<forecast>
+<fcst_time_from>2023-01-24T09:00:00Z</fcst_time_from>
+<fcst_time_to>2023-01-24T20:00:00Z</fcst_time_to>
+<wind_dir_degrees>350</wind_dir_degrees>
+<wind_speed_kt>6</wind_speed_kt>
+<wind_gust_kt>19</wind_gust_kt>
+<visibility_statute_mi>6.21</visibility_statute_mi>
+<sky_condition sky_cover="SCT" cloud_base_ft_agl="3000"/>
+</forecast>
+<forecast>
+<fcst_time_from>2023-01-24T20:00:00Z</fcst_time_from>
+<fcst_time_to>2023-01-25T03:00:00Z</fcst_time_to>
+<change_indicator>BECMG</change_indicator>
+<time_becoming>2023-01-24T22:00:00Z</time_becoming>
+<wind_dir_degrees>60</wind_dir_degrees>
+<wind_speed_kt>16</wind_speed_kt>
+<visibility_statute_mi>6.21</visibility_statute_mi>
+<not_decoded>TXM02/2509Z TNM20/2411Z</not_decoded>
+<sky_condition sky_cover="BKN" cloud_base_ft_agl="1200" cloud_type="CB"/>
+</forecast>
+<forecast>
+<fcst_time_from>2023-01-25T03:00:00Z</fcst_time_from>
+<fcst_time_to>2023-01-25T06:00:00Z</fcst_time_to>
+<change_indicator>TEMPO</change_indicator>
+<visibility_statute_mi>0.31</visibility_statute_mi>
+<vert_vis_ft>200</vert_vis_ft>
+<wx_string>+SHSN BLSN</wx_string>
+<sky_condition sky_cover="OVX"/>
+</forecast>
+<forecast>
+<fcst_time_from>2023-01-25T03:00:00Z</fcst_time_from>
+<fcst_time_to>2023-01-25T08:00:00Z</fcst_time_to>
+<change_indicator>FM</change_indicator>
+<wind_dir_degrees>80</wind_dir_degrees>
+<wind_speed_kt>25</wind_speed_kt>
+<wind_gust_kt>49</wind_gust_kt>
+<visibility_statute_mi>1.55</visibility_statute_mi>
+<wx_string>-SHSN BLSN</wx_string>
+<sky_condition sky_cover="BKN" cloud_base_ft_agl="700"/>
+<sky_condition sky_cover="OVC" cloud_base_ft_agl="1500" cloud_type="CB"/>
+</forecast>
+<forecast>
+<fcst_time_from>2023-01-25T08:00:00Z</fcst_time_from>
+<fcst_time_to>2023-01-25T15:00:00Z</fcst_time_to>
+<change_indicator>FM</change_indicator>
+<wind_dir_degrees>50</wind_dir_degrees>
+<wind_speed_kt>35</wind_speed_kt>
+<wind_gust_kt>64</wind_gust_kt>
+<visibility_statute_mi>0.43</visibility_statute_mi>
+<vert_vis_ft>200</vert_vis_ft>
+<wx_string>+SHSN BLSN</wx_string>
+<sky_condition sky_cover="OVX"/>
+</forecast>
+</TAF>
+</data>
+</response>

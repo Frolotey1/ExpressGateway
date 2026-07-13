@@ -1,0 +1,262 @@
+    <response xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:noNamespaceSchemaLocation="http://www.aviationweather.gov/static/adds/schema/taf1_2.xsd">
+        <request_index>550107684</request_index>
+        <data_source name="tafs" />
+        <request type="retrieve" />
+        <errors />
+        <warnings />
+        <time_taken_ms>6</time_taken_ms>
+        <data num_results="8">
+          <TAF>
+            <raw_text>TAF UWWW 172251Z 1800/1824 23003G09MPS 9999 SCT030 TX16/1811Z TNM00/1803Z TEMPO 1806/1815 27006G12MPS</raw_text>
+            <station_id>UWWW</station_id>
+            <issue_time>2023-04-17T22:51:00Z</issue_time>
+            <bulletin_time>2023-04-17T23:00:00Z</bulletin_time>
+            <valid_time_from>2023-04-18T00:00:00Z</valid_time_from>
+            <valid_time_to>2023-04-19T00:00:00Z</valid_time_to>
+            <latitude>53.5</latitude>
+            <longitude>50.17</longitude>
+            <elevation_m>124.0</elevation_m>
+            <forecast>
+              <fcst_time_from>2023-04-18T00:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-19T00:00:00Z</fcst_time_to>
+              <wind_dir_degrees>230</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-18T06:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T15:00:00Z</fcst_time_to>
+              <change_indicator>TEMPO</change_indicator>
+              <wind_dir_degrees>270</wind_dir_degrees>
+              <wind_speed_kt>12</wind_speed_kt>
+              <wind_gust_kt>23</wind_gust_kt>
+              <not_decoded>TX16/1811Z TNM00/1803Z</not_decoded>
+            </forecast>
+          </TAF>
+          <TAF>
+            <raw_text>TAF UWWW 171951Z 1721/1821 23003G09MPS 9999 SCT030 TX16/1811Z TNM00/1803Z TEMPO 1806/1815 27006G12MPS</raw_text>
+            <station_id>UWWW</station_id>
+            <issue_time>2023-04-17T19:51:00Z</issue_time>
+            <bulletin_time>2023-04-17T20:00:00Z</bulletin_time>
+            <valid_time_from>2023-04-17T21:00:00Z</valid_time_from>
+            <valid_time_to>2023-04-18T21:00:00Z</valid_time_to>
+            <latitude>53.5</latitude>
+            <longitude>50.17</longitude>
+            <elevation_m>124.0</elevation_m>
+            <forecast>
+              <fcst_time_from>2023-04-17T21:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T21:00:00Z</fcst_time_to>
+              <wind_dir_degrees>230</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-18T06:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T15:00:00Z</fcst_time_to>
+              <change_indicator>TEMPO</change_indicator>
+              <wind_dir_degrees>270</wind_dir_degrees>
+              <wind_speed_kt>12</wind_speed_kt>
+              <wind_gust_kt>23</wind_gust_kt>
+              <not_decoded>TX16/1811Z TNM00/1803Z</not_decoded>
+            </forecast>
+          </TAF>
+          <TAF>
+            <raw_text>TAF UWWW 171651Z 1718/1818 23003G09MPS 9999 SCT030 TX16/1811Z TN03/1803Z</raw_text>
+            <station_id>UWWW</station_id>
+            <issue_time>2023-04-17T16:51:00Z</issue_time>
+            <bulletin_time>2023-04-17T17:00:00Z</bulletin_time>
+            <valid_time_from>2023-04-17T18:00:00Z</valid_time_from>
+            <valid_time_to>2023-04-18T18:00:00Z</valid_time_to>
+            <latitude>53.5</latitude>
+            <longitude>50.17</longitude>
+            <elevation_m>124.0</elevation_m>
+            <forecast>
+              <fcst_time_from>2023-04-17T18:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T18:00:00Z</fcst_time_to>
+              <wind_dir_degrees>230</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+          </TAF>
+          <TAF>
+            <raw_text>TAF UWWW 171351Z 1715/1815 25003G09MPS 9999 SCT030 TX16/1811Z TN03/1803Z</raw_text>
+            <station_id>UWWW</station_id>
+            <issue_time>2023-04-17T13:51:00Z</issue_time>
+            <bulletin_time>2023-04-17T14:00:00Z</bulletin_time>
+            <valid_time_from>2023-04-17T15:00:00Z</valid_time_from>
+            <valid_time_to>2023-04-18T15:00:00Z</valid_time_to>
+            <latitude>53.5</latitude>
+            <longitude>50.17</longitude>
+            <elevation_m>124.0</elevation_m>
+            <forecast>
+              <fcst_time_from>2023-04-17T15:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T15:00:00Z</fcst_time_to>
+              <wind_dir_degrees>250</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+          </TAF>
+          <TAF>
+            <raw_text>TAF UWWW 171053Z 1712/1812 27003G09MPS 9999 SCT030 TX15/1712Z TN03/1803Z TEMPO 1712/1716 32006G13MPS BECMG 1716/1718 22003G09MPS</raw_text>
+            <station_id>UWWW</station_id>
+            <issue_time>2023-04-17T10:53:00Z</issue_time>
+            <bulletin_time>2023-04-17T11:00:00Z</bulletin_time>
+            <valid_time_from>2023-04-17T12:00:00Z</valid_time_from>
+            <valid_time_to>2023-04-18T12:00:00Z</valid_time_to>
+            <latitude>53.5</latitude>
+            <longitude>50.17</longitude>
+            <elevation_m>124.0</elevation_m>
+            <forecast>
+              <fcst_time_from>2023-04-17T12:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-17T16:00:00Z</fcst_time_to>
+              <wind_dir_degrees>270</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-17T12:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-17T16:00:00Z</fcst_time_to>
+              <change_indicator>TEMPO</change_indicator>
+              <wind_dir_degrees>320</wind_dir_degrees>
+              <wind_speed_kt>12</wind_speed_kt>
+              <wind_gust_kt>25</wind_gust_kt>
+              <not_decoded>TX15/1712Z TN03/1803Z</not_decoded>
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-17T16:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T12:00:00Z</fcst_time_to>
+              <change_indicator>BECMG</change_indicator>
+              <time_becoming>2023-04-17T18:00:00Z</time_becoming>
+              <wind_dir_degrees>220</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+          </TAF>
+          <TAF>
+            <raw_text>TAF UWWW 170751Z 1709/1809 33003G09MPS 9999 SCT030 TX15/1711Z TN03/1803Z TEMPO 1709/1716 02006G13MPS BECMG 1716/1718 23003G09MPS</raw_text>
+            <station_id>UWWW</station_id>
+            <issue_time>2023-04-17T07:51:00Z</issue_time>
+            <bulletin_time>2023-04-17T08:00:00Z</bulletin_time>
+            <valid_time_from>2023-04-17T09:00:00Z</valid_time_from>
+            <valid_time_to>2023-04-18T09:00:00Z</valid_time_to>
+            <latitude>53.5</latitude>
+            <longitude>50.17</longitude>
+            <elevation_m>124.0</elevation_m>
+            <forecast>
+              <fcst_time_from>2023-04-17T09:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-17T16:00:00Z</fcst_time_to>
+              <wind_dir_degrees>330</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-17T09:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-17T16:00:00Z</fcst_time_to>
+              <change_indicator>TEMPO</change_indicator>
+              <wind_dir_degrees>20</wind_dir_degrees>
+              <wind_speed_kt>12</wind_speed_kt>
+              <wind_gust_kt>25</wind_gust_kt>
+              <not_decoded>TX15/1711Z TN03/1803Z</not_decoded>
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-17T16:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T09:00:00Z</fcst_time_to>
+              <change_indicator>BECMG</change_indicator>
+              <time_becoming>2023-04-17T18:00:00Z</time_becoming>
+              <wind_dir_degrees>230</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+          </TAF>
+          <TAF>
+            <raw_text>TAF UWWW 170453Z 1706/1806 30003G09MPS 9999 SCT030 TX15/1711Z TN03/1803Z TEMPO 1706/1716 35006G12MPS TEMPO 1716/1803 23003G09MPS</raw_text>
+            <station_id>UWWW</station_id>
+            <issue_time>2023-04-17T04:53:00Z</issue_time>
+            <bulletin_time>2023-04-17T05:00:00Z</bulletin_time>
+            <valid_time_from>2023-04-17T06:00:00Z</valid_time_from>
+            <valid_time_to>2023-04-18T06:00:00Z</valid_time_to>
+            <latitude>53.5</latitude>
+            <longitude>50.17</longitude>
+            <elevation_m>124.0</elevation_m>
+            <forecast>
+              <fcst_time_from>2023-04-17T06:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T06:00:00Z</fcst_time_to>
+              <wind_dir_degrees>300</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-17T06:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-17T16:00:00Z</fcst_time_to>
+              <change_indicator>TEMPO</change_indicator>
+              <wind_dir_degrees>350</wind_dir_degrees>
+              <wind_speed_kt>12</wind_speed_kt>
+              <wind_gust_kt>23</wind_gust_kt>
+              <not_decoded>TX15/1711Z TN03/1803Z</not_decoded>
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-17T16:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T03:00:00Z</fcst_time_to>
+              <change_indicator>TEMPO</change_indicator>
+              <wind_dir_degrees>230</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+            </forecast>
+          </TAF>
+          <TAF>
+            <raw_text>TAF UWWW 170151Z 1703/1803 28003G09MPS 9999 SCT030 TX15/1711Z TNM00/1703Z TEMPO 1703/1715 33006G12MPS TEMPO 1715/1803 23006G12MPS</raw_text>
+            <station_id>UWWW</station_id>
+            <issue_time>2023-04-17T01:51:00Z</issue_time>
+            <bulletin_time>2023-04-17T02:00:00Z</bulletin_time>
+            <valid_time_from>2023-04-17T03:00:00Z</valid_time_from>
+            <valid_time_to>2023-04-18T03:00:00Z</valid_time_to>
+            <latitude>53.5</latitude>
+            <longitude>50.17</longitude>
+            <elevation_m>124.0</elevation_m>
+            <forecast>
+              <fcst_time_from>2023-04-17T03:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T03:00:00Z</fcst_time_to>
+              <wind_dir_degrees>280</wind_dir_degrees>
+              <wind_speed_kt>6</wind_speed_kt>
+              <wind_gust_kt>17</wind_gust_kt>
+              <visibility_statute_mi>6.21</visibility_statute_mi>
+              <sky_condition sky_cover="SCT" cloud_base_ft_agl="3000" />
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-17T03:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-17T15:00:00Z</fcst_time_to>
+              <change_indicator>TEMPO</change_indicator>
+              <wind_dir_degrees>330</wind_dir_degrees>
+              <wind_speed_kt>12</wind_speed_kt>
+              <wind_gust_kt>23</wind_gust_kt>
+              <not_decoded>TX15/1711Z TNM00/1703Z</not_decoded>
+            </forecast>
+            <forecast>
+              <fcst_time_from>2023-04-17T15:00:00Z</fcst_time_from>
+              <fcst_time_to>2023-04-18T03:00:00Z</fcst_time_to>
+              <change_indicator>TEMPO</change_indicator>
+              <wind_dir_degrees>230</wind_dir_degrees>
+              <wind_speed_kt>12</wind_speed_kt>
+              <wind_gust_kt>23</wind_gust_kt>
+            </forecast>
+          </TAF>
+        </data>
+      </response>

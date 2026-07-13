@@ -1,0 +1,43 @@
+﻿<response xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:noNamespaceSchemaLocation="http://www.aviationweather.gov/static/adds/schema/taf1_2.xsd">
+<request_index>236910697</request_index>
+<data_source name="tafs"/>
+<request type="retrieve"/>
+<errors/>
+<warnings/>
+<time_taken_ms>8</time_taken_ms>
+<data num_results="10">
+<TAF>
+<raw_text>TAF UHBB 200740Z 2009/2109 33003G08MPS CAVOK BECMG 2023/2101 28003G08MPS</raw_text>
+<station_id>UHBB</station_id>
+<issue_time>2023-02-20T07:40:00Z</issue_time>
+<bulletin_time>2023-02-20T08:00:00Z</bulletin_time>
+<valid_time_from>2023-02-20T09:00:00Z</valid_time_from>
+<valid_time_to>2023-02-21T09:00:00Z</valid_time_to>
+<latitude>50.43</latitude>
+<longitude>127.42</longitude>
+<elevation_m>185.0</elevation_m>
+<forecast>
+<fcst_time_from>2023-02-20T09:00:00Z</fcst_time_from>
+<fcst_time_to>2023-02-20T23:00:00Z</fcst_time_to>
+<wind_dir_degrees>330</wind_dir_degrees>
+<wind_speed_kt>6</wind_speed_kt>
+<wind_gust_kt>16</wind_gust_kt>
+<visibility_statute_mi>6.21</visibility_statute_mi>
+<wx_string>NSW</wx_string>
+<sky_condition sky_cover="NSC"/>
+</forecast>
+<forecast>
+<fcst_time_from>2023-02-20T23:00:00Z</fcst_time_from>
+<fcst_time_to>2023-02-21T09:00:00Z</fcst_time_to>
+<change_indicator>BECMG</change_indicator>
+<time_becoming>2023-02-21T01:00:00Z</time_becoming>
+<wind_dir_degrees>280</wind_dir_degrees>
+<wind_speed_kt>6</wind_speed_kt>
+<wind_gust_kt>16</wind_gust_kt>
+<visibility_statute_mi>6.21</visibility_statute_mi>
+<wx_string>NSW</wx_string>
+<sky_condition sky_cover="NSC"/>
+</forecast>
+</TAF>
+</data>
+</response>

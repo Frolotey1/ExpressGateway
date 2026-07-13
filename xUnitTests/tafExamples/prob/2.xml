@@ -1,0 +1,49 @@
+<response xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:noNamespaceSchemaLocation="http://www.aviationweather.gov/static/adds/schema/taf1_2.xsd">
+<request_index>236910697</request_index>
+<data_source name="tafs"/>
+<request type="retrieve"/>
+<errors/>
+<warnings/>
+<time_taken_ms>8</time_taken_ms>
+<data num_results="10">
+<TAF>
+<raw_text>TAF UWWW 300751Z 3009/0109 36003MPS 6000 -SN BKN007 TXM09/3011Z TNM12/0103Z TEMPO 3009/3015 1000 SN BR OVC003 PROB40 3015/0107 0300 FZFG VV002</raw_text>
+<station_id>UWWW</station_id>
+<issue_time>2022-11-30T07:51:00Z</issue_time>
+<bulletin_time>2022-11-30T08:00:00Z</bulletin_time>
+<valid_time_from>2022-11-30T09:00:00Z</valid_time_from>
+<valid_time_to>2022-12-01T09:00:00Z</valid_time_to>
+<latitude>53.5</latitude>
+<longitude>50.17</longitude>
+<elevation_m>124.0</elevation_m>
+<forecast>
+<fcst_time_from>2022-11-30T09:00:00Z</fcst_time_from>
+<fcst_time_to>2022-12-01T09:00:00Z</fcst_time_to>
+<wind_dir_degrees>360</wind_dir_degrees>
+<wind_speed_kt>6</wind_speed_kt>
+<visibility_statute_mi>3.73</visibility_statute_mi>
+<wx_string>-SN</wx_string>
+<sky_condition sky_cover="BKN" cloud_base_ft_agl="700"/>
+</forecast>
+<forecast>
+<fcst_time_from>2022-11-30T09:00:00Z</fcst_time_from>
+<fcst_time_to>2022-11-30T15:00:00Z</fcst_time_to>
+<change_indicator>TEMPO</change_indicator>
+<visibility_statute_mi>0.62</visibility_statute_mi>
+<wx_string>SN BR</wx_string>
+<not_decoded>TXM09/3011Z TNM12/0103Z</not_decoded>
+<sky_condition sky_cover="OVC" cloud_base_ft_agl="300"/>
+</forecast>
+<forecast>
+<fcst_time_from>2022-11-30T15:00:00Z</fcst_time_from>
+<fcst_time_to>2022-12-01T07:00:00Z</fcst_time_to>
+<change_indicator>PROB</change_indicator>
+<probability>40</probability>
+<visibility_statute_mi>0.19</visibility_statute_mi>
+<vert_vis_ft>200</vert_vis_ft>
+<wx_string>FZFG</wx_string>
+<sky_condition sky_cover="OVX"/>
+</forecast>
+</TAF>
+</data>
+</response>
