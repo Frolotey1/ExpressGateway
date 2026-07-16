@@ -1,0 +1,48 @@
+using Xunit;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
+using ExpressGateway.Controllers;
+
+namespace ExpressGateway.Tests.Controllers;
+
+public class HealthControllerTests
+{
+    private readonly HealthController _controller;
+
+    public HealthControllerTests()
+    {
+        _controller = new HealthController();
+    }
+
+    [Fact]
+    public void GetHealth_ShouldReturnOkWithStatus()
+    {
+        // Act
+        var result = _controller.GetHealth();
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+        var okResult = result as OkObjectResult;
+        okResult.Value.Should().NotBeNull();
+        
+        var response = okResult.Value as dynamic;
+        ((string)response.status).Should().Be("ok");
+        ((DateTime)response.timestamp).Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void Ping_ShouldReturnPong()
+    {
+        // Act
+        var result = _controller.Ping();
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+        var okResult = result as OkObjectResult;
+        okResult.Value.Should().NotBeNull();
+        
+        var response = okResult.Value as dynamic;
+        ((string)response.status).Should().Be("ok");
+        ((string)response.message).Should().Be("pong");
+    }
+}
