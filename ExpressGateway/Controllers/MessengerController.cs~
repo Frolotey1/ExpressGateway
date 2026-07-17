@@ -17,9 +17,6 @@ public class MessengerController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Send a message to Express chat
-    /// </summary>
     [HttpPost("send")]
     [ProducesResponseType(typeof(ApiResponse<SendMessageResponse>), 200)]
     [ProducesResponseType(typeof(ApiResponse<object>), 400)]
@@ -50,9 +47,6 @@ public class MessengerController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Send a message to the default group
-    /// </summary>
     [HttpPost("send-default")]
     [ProducesResponseType(typeof(ApiResponse<SendMessageResponse>), 200)]
     public async Task<IActionResult> SendToDefault([FromBody] string message)
@@ -70,9 +64,6 @@ public class MessengerController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Get list of available chats
-    /// </summary>
     [HttpGet("chats")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<ChatInfo>>), 200)]
     public async Task<IActionResult> GetChats()
@@ -86,9 +77,6 @@ public class MessengerController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Webhook endpoint for receiving messages from Express
-    /// </summary>
     [HttpPost("webhook")]
     [ProducesResponseType(typeof(ApiResponse<object>), 200)]
     public async Task<IActionResult> Webhook([FromBody] WebhookRequest request)
@@ -104,9 +92,6 @@ public class MessengerController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Health check endpoint
-    /// </summary>
     [HttpGet("ping")]
     [ProducesResponseType(typeof(ApiResponse<object>), 200)]
     public IActionResult Ping()

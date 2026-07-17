@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using ExpressGateway.Models;
+using Microsoft.Extensions.Logging;
 using ExpressGateway.Services;
+using ExpressGateway.Models;
 
 namespace ExpressGateway.Controllers;
 
@@ -18,93 +19,122 @@ public class MessengerController : ControllerBase
     }
 
     [HttpPost("send")]
-    [ProducesResponseType(typeof(ApiResponse<SendMessageResponse>), 200)]
-    [ProducesResponseType(typeof(ApiResponse<object>), 400)]
-    [ProducesResponseType(typeof(ApiResponse<object>), 500)]
     public async Task<IActionResult> Send([FromBody] SendMessageRequest request)
     {
         try
         {
-            if (string.IsNullOrEmpty(request.ChatId))
-                return BadRequest(new ApiResponse<object> { Success = false, Error = "ChatId is required" });
-
-            if (string.IsNullOrEmpty(request.Message))
-                return BadRequest(new ApiResponse<object> { Success = false, Error = "Message is required" });
-
             var result = await _expressService.SendMessageAsync(request.ChatId, request.Message, request.Asset);
-
-            return Ok(new ApiResponse<SendMessageResponse>
-            {
-                Success = true,
-                Data = result,
-                Message = "Message sent successfully"
-            });
+            return Ok(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending message");
-            return StatusCode(500, new ApiResponse<object> { Success = false, Error = ex.Message });
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
     [HttpPost("send-default")]
-    [ProducesResponseType(typeof(ApiResponse<SendMessageResponse>), 200)]
-    public async Task<IActionResult> SendToDefault([FromBody] string message)
+    public async Task<IActionResult> SendDefault([FromBody] SendDefaultMessageRequest request)
     {
-        if (string.IsNullOrEmpty(message))
-            return BadRequest(new ApiResponse<object> { Success = false, Error = "Message is required" });
-
-        var result = await _expressService.SendToDefaultGroupAsync(message);
-
-        return Ok(new ApiResponse<SendMessageResponse>
+        try
         {
-            Success = true,
-            Data = result,
-            Message = "Message sent to default group"
-        });
+            var result = await _expressService.SendToDefaultGroupAsync(request.Message);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending default message");
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     [HttpGet("chats")]
-    [ProducesResponseType(typeof(ApiResponse<IEnumerable<ChatInfo>>), 200)]
-    public async Task<IActionResult> GetChats()
+    public async Task<IActionResult> GetChats([FromQuery] int limit = 50, [FromQuery] int offset = 0)
     {
-        var chats = await _expressService.GetChatsAsync();
-        return Ok(new ApiResponse<IEnumerable<ChatInfo>>
+        try
         {
-            Success = true,
-            Data = chats,
-            Message = $"Found {chats.Count()} chats"
-        });
+            var result = await _expressService.GetChatsAsync(limit, offset);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting chats");
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     [HttpPost("webhook")]
-    [ProducesResponseType(typeof(ApiResponse<object>), 200)]
-    public async Task<IActionResult> Webhook([FromBody] WebhookRequest request)
+    public async Task<IActionResult> SetWebhook([FromBody] WebhookRequest request)
     {
-        _logger.LogInformation("Webhook received: {Message}", request.Message);
-        await _expressService.ProcessWebhookAsync(request);
-
-        return Ok(new ApiResponse<object>
+        try
         {
-            Success = true,
-            Message = "Webhook processed",
-            Data = new { received = request.Message, timestamp = DateTime.UtcNow }
-        });
+            var result = await _expressService.SetWebhookAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting webhook");
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    [HttpGet("webhook")]
+    public async Task<IActionResult> GetWebhook()
+    {
+        try
+        {
+            var result = await _expressService.GetWebhookAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting webhook");
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("webhook")]
+    public async Task<IActionResult> DeleteWebhook()
+    {
+        try
+        {
+            var result = await _expressService.DeleteWebhookAsync();
+            return Ok(new { success = result, message = result ? "Webhook deleted" : "Failed to delete webhook" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting webhook");
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("webhook/event")]
+    public async Task<IActionResult> ProcessWebhookEvent([FromBody] WebhookEvent eventData)
+    {
+        try
+        {
+            var result = await _expressService.ProcessWebhookEventAsync(eventData);
+            return Ok(new { success = result, message = result ? "Event processed" : "Failed to process event" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing webhook event");
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     [HttpGet("ping")]
-    [ProducesResponseType(typeof(ApiResponse<object>), 200)]
-    public IActionResult Ping()
+    public async Task<IActionResult> Ping()
     {
-        return Ok(new ApiResponse<object>
+        try
         {
-            Success = true,
-            Message = "pong",
-            Data = new
-            {
-                timestamp = DateTime.UtcNow,
-                environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "unknown"
-            }
-        });
+            var result = await _expressService.PingAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ping");
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 }
