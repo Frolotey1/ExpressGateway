@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "dgSpecHash": "r53sIeE2SivVxxXe1sCIPt4RBjaxf/cz6pUU6Y4Ync+CT6eVtN9rSePUY+hmlVe6Ga0OS1qwZ2MCJM9MvmsWYQ==",
+  "success": true,
+  "projectFilePath": "/home/fr1zb3e/ExpressGateway/ExpressGateway/ExpressGateway.csproj",
+  "expectedPackageFiles": [
+    "/home/fr1zb3e/.nuget/packages/fluentassertions/8.10.0/fluentassertions.8.10.0.nupkg.sha512",
+    "/home/fr1zb3e/.nuget/packages/microsoft.extensions.apidescription.server/6.0.5/microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
+    "/home/fr1zb3e/.nuget/packages/microsoft.openapi/1.2.3/microsoft.openapi.1.2.3.nupkg.sha512",
+    "/home/fr1zb3e/.nuget/packages/microsoft.visualstudio.azure.containers.tools.targets/1.17.0/microsoft.visualstudio.azure.containers.tools.targets.1.17.0.nupkg.sha512",
+    "/home/fr1zb3e/.nuget/packages/swashbuckle.aspnetcore/6.5.0/swashbuckle.aspnetcore.6.5.0.nupkg.sha512",
+    "/home/fr1zb3e/.nuget/packages/swashbuckle.aspnetcore.swagger/6.5.0/swashbuckle.aspnetcore.swagger.6.5.0.nupkg.sha512",
+    "/home/fr1zb3e/.nuget/packages/swashbuckle.aspnetcore.swaggergen/6.5.0/swashbuckle.aspnetcore.swaggergen.6.5.0.nupkg.sha512",
+    "/home/fr1zb3e/.nuget/packages/swashbuckle.aspnetcore.swaggerui/6.5.0/swashbuckle.aspnetcore.swaggerui.6.5.0.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -37,11 +37,11 @@ public class ApiKeyMiddleware
             return;
         }
 
-        var expectedKey = _configuration["ExpressSettings:ApiKey"];
+        var expectedKey = _configuration["ApiKey"];
         
         if (string.IsNullOrEmpty(expectedKey))
         {
-            _logger.LogError("API key not configured in ExpressSettings");
+            _logger.LogError("ApiKey not configured");
             context.Response.StatusCode = 500;
             await context.Response.WriteAsJsonAsync(new
             {
@@ -51,9 +51,6 @@ public class ApiKeyMiddleware
             });
             return;
         }
-
-        _logger.LogDebug("Expected key: {ExpectedKey}", expectedKey);
-        _logger.LogDebug("Provided key: {ProvidedKey}", apiKey.ToString());
 
         if (!expectedKey.Equals(apiKey.ToString()))
         {

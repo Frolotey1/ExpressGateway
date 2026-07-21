@@ -1,7 +1,8 @@
-using ExpressGateway.Core.Impl.Messenger;
 using ExpressGateway.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace ExpressGateway.Services;
@@ -10,11 +11,13 @@ public class ExpressService : IExpressService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<ExpressService> _logger;
-    private readonly Dictionary<string, ChatInfo> _chatCache = new();
-    private readonly string _defaultChatId;
+    private readonly string _apiUrl;
+    private readonly string _secKey;
+    private readonly string _botId;
+    private readonly string _chatId;
     private readonly HttpClient _httpClient;
-    private readonly string _apiBaseUrl;
-    private readonly string _apiKey;
+    private string? _jwtToken;
+    private DateTime _tokenExpiry = DateTime.MinValue;
 
     public ExpressService(
         IConfiguration configuration, 
@@ -24,72 +27,85 @@ public class ExpressService : IExpressService
         _configuration = configuration;
         _logger = logger;
         _httpClient = httpClient;
+
+        var expressSettings = _configuration.GetSection("ExpressSettings");
         
-        _defaultChatId = _configuration["ExpressSettings:DefaultChatId"] 
-            ?? throw new Exception("DefaultChatId not configured");
-        
-        _apiBaseUrl = _configuration["ExpressSettings:ApiUrl"] 
+        _apiUrl = expressSettings["ApiUrl"] 
             ?? throw new Exception("ApiUrl not configured");
-        
-        _apiKey = _configuration["ExpressSettings:ApiKey"] 
-            ?? throw new Exception("ApiKey not configured");
-        
-        _httpClient.DefaultRequestHeaders.Add("X-Api-Key", _apiKey);
-        _httpClient.BaseAddress = new Uri(_apiBaseUrl);
-        
-        LoadChats();
-    }
+        _secKey = expressSettings["SecKey"] 
+            ?? throw new Exception("SecKey not configured");
+        _botId = expressSettings["BotId"] 
+            ?? throw new Exception("BotId not configured");
+        _chatId = expressSettings["ChatId"] 
+            ?? throw new Exception("ChatId not configured");
 
-    private void LoadChats()
+        _httpClient.BaseAddress = new Uri(_apiUrl);
+    }
+    private string GenerateSignature(string botId, string secKey)
     {
-        var section = _configuration.GetSection("ExpressSettings:Chats");
-        var groups = section.GetChildren();
-
-        foreach (var group in groups)
-        {
-            var asset = group.Key;
-            var chatId = group.Value;
-            
-            _chatCache[asset.ToLower()] = new ChatInfo
-            {
-                Id = chatId,
-                Asset = asset,
-                ChatId = chatId,
-                Name = $"Chat for {asset}",
-                IsDefault = chatId == _defaultChatId,
-                MembersCount = 0
-            };
-        }
-
-        if (!_chatCache.ContainsKey("default"))
-        {
-            _chatCache["default"] = new ChatInfo
-            {
-                Id = _defaultChatId,
-                Asset = "default",
-                ChatId = _defaultChatId,
-                Name = "Default Group",
-                IsDefault = true,
-                MembersCount = 0
-            };
-        }
+        var keyBytes = Encoding.UTF8.GetBytes(secKey);
+        var dataBytes = Encoding.UTF8.GetBytes(botId);
+        
+        using var hmac = new HMACSHA256(keyBytes);
+        var hash = hmac.ComputeHash(dataBytes);
+        return BitConverter.ToString(hash).Replace("-", "").ToUpper();
     }
 
+    private async Task<string> GetJwtTokenAsync()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(_jwtToken) && DateTime.UtcNow < _tokenExpiry)
+            {
+                return _jwtToken;
+            }
+
+            var signature = GenerateSignature(_botId, _secKey);
+            var url = $"/api/v2/botx/bots/{_botId}/token?signature={signature}";
+
+            _logger.LogInformation("Getting JWT token from: {Url}", url);
+
+            var response = await _httpClient.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Failed to get JWT token: {response.StatusCode} - {content}");
+            }
+
+            var json = JsonSerializer.Deserialize<JwtResponse>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (json?.Result == null || json.Status?.ToUpper() != "OK")
+            {
+                throw new Exception($"Invalid JWT response: {content}");
+            }
+
+            _jwtToken = json.Result;
+            _tokenExpiry = DateTime.UtcNow.AddMinutes(55);
+
+            _logger.LogInformation("JWT token obtained successfully");
+            return _jwtToken;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get JWT token");
+            throw;
+        }
+    }
     public async Task<SendMessageResponse> SendMessageAsync(string chatId, string message, string? asset = null)
     {
         try
         {
-            _logger.LogInformation("Sending to Express: ChatId={ChatId}, Asset={Asset}", chatId, asset);
-
-            var botId = _configuration["ExpressSettings:BotId"]
-                ?? throw new Exception("BotId not configured");
+            var jwtToken = await GetJwtTokenAsync();
 
             var payload = new
             {
                 chatId = chatId,
                 text = message,
-                botId = botId,
-                asset = asset ?? ""
+                botId = _botId
             };
 
             var jsonPayload = JsonSerializer.Serialize(payload);
@@ -97,64 +113,21 @@ public class ExpressService : IExpressService
 
             var content = new StringContent(
                 jsonPayload,
-                System.Text.Encoding.UTF8,
+                Encoding.UTF8,
                 "application/json"
             );
 
-            var response = await _httpClient.PostAsync("/api/v4/messages", content);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v4/messages");
+            request.Content = content;
+            request.Headers.Add("Authorization", $"Bearer {jwtToken}");
 
+            var response = await _httpClient.SendAsync(request);
             var responseBody = await response.Content.ReadAsStringAsync();
+
             _logger.LogInformation("Response Status: {StatusCode}", response.StatusCode);
-            _logger.LogInformation("Response Body: {ResponseBody}", responseBody ?? "[empty]");
 
             if (response.IsSuccessStatusCode)
             {
-                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
-                {
-                    return new SendMessageResponse
-                    {
-                        Success = true,
-                        ChatId = chatId,
-                        SentAt = DateTime.UtcNow,
-                        Status = "sent",
-                        MessageId = Guid.NewGuid().ToString(),
-                        ExpressResponse = "Message sent successfully (204 No Content)"
-                    };
-                }
-
-                if (!string.IsNullOrWhiteSpace(responseBody))
-                {
-                    try
-                    {
-                        var apiResponse = JsonSerializer.Deserialize<ExpressApiResponse>(responseBody, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-
-                        return new SendMessageResponse
-                        {
-                            Success = true,
-                            ChatId = chatId,
-                            SentAt = DateTime.UtcNow,
-                            Status = "sent",
-                            MessageId = apiResponse?.MessageId ?? Guid.NewGuid().ToString(),
-                            ExpressResponse = responseBody
-                        };
-                    }
-                    catch (JsonException)
-                    {
-                        return new SendMessageResponse
-                        {
-                            Success = true,
-                            ChatId = chatId,
-                            SentAt = DateTime.UtcNow,
-                            Status = "sent",
-                            MessageId = Guid.NewGuid().ToString(),
-                            ExpressResponse = responseBody
-                        };
-                    }
-                }
-
                 return new SendMessageResponse
                 {
                     Success = true,
@@ -187,82 +160,51 @@ public class ExpressService : IExpressService
 
     public async Task<SendMessageResponse> SendToDefaultGroupAsync(string message)
     {
-        return await SendMessageAsync(_defaultChatId, message);
+        return await SendMessageAsync(_chatId, message);
     }
-
     public async Task<ChatListResponse> GetChatsAsync(int limit = 50, int offset = 0)
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/chats?limit={limit}&offset={offset}");
-            
+            var jwtToken = await GetJwtTokenAsync();
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v4/chats?limit={limit}&offset={offset}");
+            request.Headers.Add("Authorization", $"Bearer {jwtToken}");
+
+            var response = await _httpClient.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
+
             if (response.IsSuccessStatusCode)
             {
-                var json = await response.Content.ReadAsStringAsync();
-                var externalChats = JsonSerializer.Deserialize<ChatListResponse>(json, new JsonSerializerOptions
+                var chats = JsonSerializer.Deserialize<ChatListResponse>(json, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
-                
-                if (externalChats != null && externalChats.Chats.Any())
-                {
-                    return externalChats;
-                }
+
+                return chats ?? new ChatListResponse();
             }
+
+            _logger.LogWarning("Failed to get chats: {StatusCode}", response.StatusCode);
+            return new ChatListResponse();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to get chats from external API, using cache");
+            _logger.LogWarning(ex, "Failed to get chats");
+            return new ChatListResponse();
         }
-
-        var chats = _chatCache.Values
-            .Skip(offset)
-            .Take(limit)
-            .Select(c => new ChatInfo
-            {
-                Id = c.ChatId,
-                Name = c.Name ?? c.Asset,
-                MembersCount = c.MembersCount
-            })
-            .ToList();
-
-        return new ChatListResponse
-        {
-            Chats = chats,
-            Total = _chatCache.Count
-        };
     }
 
     public async Task<PingResponse> PingAsync()
     {
-        try
-        {
-            var response = await _httpClient.GetAsync("/api/ping");
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<PingResponse>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                return result ?? new PingResponse
-                {
-                    Status = "ok",
-                    Message = "pong"
-                };
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "External API ping failed, using local response");
-        }
-
         return new PingResponse
         {
             Status = "ok",
-            Message = "pong (local)"
+            Message = "pong"
         };
+    }
+    private class JwtResponse
+    {
+        public string? Status { get; set; }
+        public string? Result { get; set; }
     }
 }
