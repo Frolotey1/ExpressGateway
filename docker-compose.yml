@@ -9,7 +9,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
-      - ApiKey=test-api-key
+      - ApiKey=q3fq3-4fq34f-3qfq-324f3-4g3q-f-q3v-qev3
       - ExpressProperties__bot=50882e44-06fe-5b27-81d6-61d0216a4199:9c3c71681df5aa45c69eee2483c3329d
     restart: unless-stopped
     networks:
