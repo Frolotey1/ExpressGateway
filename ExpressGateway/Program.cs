@@ -128,7 +128,7 @@ if (app.Environment.IsDevelopment())
             <div class='example'>
                 POST /api/Messenger/send<br/>
                 {<br/>
-                &nbsp;&nbsp;""chatId"": ""5455c9c9-3dc6-590b-be34-74f82f46308e"",<br/>
+                &nbsp;&nbsp;""chatId"": ""*****"",<br/>
                 &nbsp;&nbsp;""text"": ""Привет, мир!""<br/>
                 }
             </div>
@@ -148,7 +148,7 @@ if (app.Environment.IsDevelopment())
 
             <h2>Групповой ChatId по умолчанию</h2>
             <div class='info'>
-                <p><strong>Chat ID:</strong> <code>5455c9c9-3dc6-590b-be34-74f82f46308e</code></p>
+                <p><strong>Chat ID:</strong> <code>*****</code></p>
                 <p><small>Этот ID используется в методе send-default</small></p>
             </div>
 
