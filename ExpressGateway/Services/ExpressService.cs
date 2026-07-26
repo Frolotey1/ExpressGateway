@@ -52,51 +52,54 @@ public class ExpressService : IExpressService
     }
 
     private async Task<string> GetJwtTokenAsync()
+{
+    try
     {
-        try
+        if (!string.IsNullOrEmpty(_jwtToken))
         {
-            if (!string.IsNullOrEmpty(_jwtToken))
-            {
-                _logger.LogDebug("Using existing JWT token");
-                return _jwtToken;
-            }
-
-            var signature = GenerateSignature(_botId, _secKey);
-            var url = $"/api/v2/botx/bots/{_botId}/token?signature={signature}";
-
-            _logger.LogInformation("Getting JWT token from: {Url}", url);
-
-            var response = await _httpClient.GetAsync(url);
-            var content = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError("Failed to get JWT token. Status: {StatusCode}, Response: {Response}", 
-                    response.StatusCode, content);
-                throw new Exception($"Failed to get JWT token: {response.StatusCode} - {content}");
-            }
-
-            var json = JsonSerializer.Deserialize<JwtResponse>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            if (json?.Result == null || json.Status?.ToUpper() != "OK")
-            {
-                _logger.LogError("Invalid JWT response: {Response}", content);
-                throw new Exception($"Invalid JWT response: {content}");
-            }
-
-            _jwtToken = json.Result;
-            _logger.LogInformation("JWT token obtained successfully");
+            _logger.LogDebug("Using existing JWT token");
             return _jwtToken;
         }
-        catch (Exception ex)
+
+        _jwtToken = null;
+
+        var signature = GenerateSignature(_botId, _secKey);
+        var url = $"/api/v2/botx/bots/{_botId}/token?signature={signature}";
+
+        _logger.LogInformation("Getting JWT token from: {Url}", url);
+
+        var response = await _httpClient.GetAsync(url);
+        var content = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError(ex, "Failed to get JWT token");
-            throw;
+            _logger.LogError("Failed to get JWT token. Status: {StatusCode}, Response: {Response}", 
+                response.StatusCode, content);
+            throw new Exception($"Failed to get JWT token: {response.StatusCode} - {content}");
         }
+
+        var json = JsonSerializer.Deserialize<JwtResponse>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        if (json?.Result == null || json.Status?.ToUpper() != "OK")
+        {
+            _logger.LogError("Invalid JWT response: {Response}", content);
+            throw new Exception($"Invalid JWT response: {content}");
+        }
+
+        _jwtToken = json.Result;
+        _logger.LogInformation("JWT token obtained successfully");
+        return _jwtToken;
     }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to get JWT token");
+        _jwtToken = null; 
+        throw;
+    }
+}
 
     public async Task<SendMessageResponse> SendMessageAsync(string chatId, string message, string? asset = null)
     {
