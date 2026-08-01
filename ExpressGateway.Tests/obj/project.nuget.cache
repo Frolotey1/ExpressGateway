@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "gmAh4MEp1Ak=",
+  "dgSpecHash": "YSzzG73eVEij43562h+6xuUiN9KnDA9snM8jLULvCDHfLAR/Y5Mk2IVIShDVUU7KUB9gq6r0TBzEdoK1tUn3WA==",
   "success": false,
   "projectFilePath": "/home/fr1zb3e/ExpressGateway/ExpressGateway.Tests/ExpressGateway.Tests.csproj",
   "expectedPackageFiles": [
@@ -30,17 +30,13 @@
     "/home/fr1zb3e/.nuget/packages/xunit.core/2.9.3/xunit.core.2.9.3.nupkg.sha512",
     "/home/fr1zb3e/.nuget/packages/xunit.extensibility.core/2.9.3/xunit.extensibility.core.2.9.3.nupkg.sha512",
     "/home/fr1zb3e/.nuget/packages/xunit.extensibility.execution/2.9.3/xunit.extensibility.execution.2.9.3.nupkg.sha512",
-    "/home/fr1zb3e/.nuget/packages/xunit.runner.visualstudio/3.1.4/xunit.runner.visualstudio.3.1.4.nupkg.sha512",
-    "/home/fr1zb3e/.nuget/packages/microsoft.netcore.app.ref/8.0.28/microsoft.netcore.app.ref.8.0.28.nupkg.sha512",
-    "/home/fr1zb3e/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.28/microsoft.aspnetcore.app.ref.8.0.28.nupkg.sha512"
+    "/home/fr1zb3e/.nuget/packages/xunit.runner.visualstudio/3.1.4/xunit.runner.visualstudio.3.1.4.nupkg.sha512"
   ],
   "logs": [
     {
       "code": "NU1202",
       "level": "Error",
       "message": "Package Microsoft.AspNetCore.Mvc.Testing 10.0.10 is not compatible with net8.0 (.NETCoreApp,Version=v8.0). Package Microsoft.AspNetCore.Mvc.Testing 10.0.10 supports: net10.0 (.NETCoreApp,Version=v10.0)",
-      "projectPath": "/home/fr1zb3e/ExpressGateway/ExpressGateway.Tests/ExpressGateway.Tests.csproj",
-      "filePath": "/home/fr1zb3e/ExpressGateway/ExpressGateway.Tests/ExpressGateway.Tests.csproj",
       "libraryId": "Microsoft.AspNetCore.Mvc.Testing",
       "targetGraphs": [
         "net8.0"
