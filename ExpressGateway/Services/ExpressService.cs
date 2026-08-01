@@ -203,6 +203,80 @@ public class ExpressService : IExpressService
         }
     }
 
+    public async Task<List<IncomingMessage>> GetMessagesAsync(string chatId, int limit = 50, int offset = 0)
+    {
+        try
+        {
+            var jwtToken = await GetJwtTokenAsync();
+            var url = $"/api/v4/chats/{chatId}/messages?limit={limit}&offset={offset}";
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Authorization", $"Bearer {jwtToken}");
+
+            var response = await _httpClient.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to get messages: {StatusCode}", response.StatusCode);
+                return new List<IncomingMessage>();
+            }
+
+            var result = JsonSerializer.Deserialize<MessagesResponse>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return result?.Messages ?? new List<IncomingMessage>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get messages for chat {ChatId}", chatId);
+            return new List<IncomingMessage>();
+        }
+    }
+
+    public async Task<List<IncomingMessage>> GetNewMessagesAsync(string chatId, DateTime? since = null)
+    {
+        try
+        {
+            var jwtToken = await GetJwtTokenAsync();
+            
+            var sinceParam = since ?? DateTime.UtcNow.AddMinutes(-5);
+            var url = $"/api/v4/chats/{chatId}/messages?since={sinceParam:yyyy-MM-ddTHH:mm:ssZ}";
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Authorization", $"Bearer {jwtToken}");
+
+            var response = await _httpClient.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to get new messages: {StatusCode}", response.StatusCode);
+                return new List<IncomingMessage>();
+            }
+
+            var result = JsonSerializer.Deserialize<MessagesResponse>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return result?.Messages ?? new List<IncomingMessage>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get new messages for chat {ChatId}", chatId);
+            return new List<IncomingMessage>();
+        }
+    }
+
+    private class MessagesResponse
+    {
+        public List<IncomingMessage> Messages { get; set; } = new();
+        public int Total { get; set; }
+        public bool HasMore { get; set; }
+    }
     private class JwtResponse
     {
         public string? Status { get; set; }

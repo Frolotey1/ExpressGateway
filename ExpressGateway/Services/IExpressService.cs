@@ -6,6 +6,8 @@ public interface IExpressService
 {
     Task<SendMessageResponse> SendMessageAsync(string chatId, string message, string? asset = null);
     Task<SendMessageResponse> SendToDefaultGroupAsync(string message);
+    Task<List<IncomingMessage>> GetMessagesAsync(string chatId, int limit = 50, int offset = 0);
+    Task<List<IncomingMessage>> GetNewMessagesAsync(string chatId, DateTime? since = null);
     Task<PingResponse> PingAsync();
 }
 

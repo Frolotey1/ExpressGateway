@@ -1,5 +1,7 @@
 using ExpressGateway.Middleware;
 using ExpressGateway.Services;
+using ExpressGateway.Services.Redmine;
+using ExpressGateway.Services.Redmine.Models;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,7 +56,13 @@ builder.Logging.AddSimpleConsole(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient<IExpressService, ExpressService>();
+builder.Services.AddHttpClient<IRedmineService, RedmineService>();
 builder.Services.AddScoped<IExpressService, ExpressService>();
+builder.Services.AddScoped<RedmineBotService>();
+builder.Services.AddScoped<IRedmineService, RedmineService>();
+builder.Services.AddScoped<MessageProcessorService>();
+builder.Services.AddHostedService<MessagePollingService>();
+builder.Services.AddScoped<IRedmineBotService, RedmineBotService>();
 
 var app = builder.Build();
 
@@ -93,6 +101,8 @@ if (app.Environment.IsDevelopment())
             .custom-info .endpoint { color: #34d399; font-weight: bold; }
             .custom-info .method { color: #f472b6; font-weight: bold; }
             .custom-info .example { background: #0f172a; padding: 8px 12px; border-radius: 4px; margin: 5px 0; font-family: monospace; color: #a5f3fc; }
+            .custom-info .param { color: #fcd34d; font-weight: bold; }
+            .custom-info .required { color: #ef4444; font-weight: bold; }
         </style>
         <div class='custom-info'>
             <h1>Аутентификация</h1>
@@ -105,58 +115,135 @@ if (app.Environment.IsDevelopment())
                 <p>4. <strong>ОБНОВИТЕ СТРАНИЦУ (F5)</strong></p>
                 <p>5. Затем нажмите <strong>Try it out</strong> на любом эндпоинте</p>
             </div>
-            
-            <div class='success'>
-                <p><strong>Проверка через curl:</strong></p>
-                <div class='highlight'>
-                    <code>curl -X GET ""http://localhost:5000/api/Messenger/ping"" -H ""X-Api-Key: your-api-key-here""</code>
-                </div>
+
+            <h2>Информация о боте</h2>
+            <div class='info'>
+                <p><strong>Bot ID:</strong> <code>your-bot-id</code> <span class='required'>(обязательный)</span></p>
+                <p><strong>SecKey:</strong> <code>your-sec-key</code> <span class='required'>(обязательный)</span></p>
+                <p><strong>API Url:</strong> <code>https://x.ar-management.ru</code> <span class='required'>(обязательный)</span></p>
+                <p><small>Эти параметры задаются в appsettings.json и используются для авторизации бота</small></p>
             </div>
-            
+
             <h2>Доступные эндпоинты</h2>
+            
+            <h3>Методы для работы с ботом</h3>
             <div class='highlight'>
-                <p><span class='method'>POST</span> <span class='endpoint'>/api/Messenger/send</span> - Отправить сообщение в чат</p>
-                <p><span class='method'>POST</span> <span class='endpoint'>/api/Messenger/send-default</span> - Отправить сообщение в группу по умолчанию</p>
-                <p><span class='method'>GET</span> <span class='endpoint'>/api/Messenger/chats</span> - Получить список чатов</p>
+                <p><span class='method'>GET</span> <span class='endpoint'>/api/Messenger/health</span> - Проверка здоровья сервиса</p>
+                <p><span class='method'>GET</span> <span class='endpoint'>/api/Messenger/status</span> - Получить статус чата с ботом</p>
+                <p><span class='method'>POST</span> <span class='endpoint'>/api/Messenger/command</span> - Отправить команду боту</p>
+            </div>
+
+            <h3>Вспомогательные методы</h3>
+            <div class='highlight'>
                 <p><span class='method'>GET</span> <span class='endpoint'>/api/Messenger/ping</span> - Проверка доступности API</p>
+            </div>
+
+            <h3>ℹСистемные методы</h3>
+            <div class='highlight'>
                 <p><span class='method'>GET</span> <span class='endpoint'>/health</span> - Health check сервиса</p>
             </div>
 
-            <h2>Примеры запросов</h2>
+            <h2>Примеры запросов к боту</h2>
             
-            <h3>Отправка сообщения</h3>
+            <h3>1. Проверка здоровья</h3>
             <div class='example'>
-                POST /api/Messenger/send<br/>
-                {<br/>
-                &nbsp;&nbsp;""chatId"": ""*****"",<br/>
-                &nbsp;&nbsp;""text"": ""Привет, мир!""<br/>
+                GET /api/Messenger/health
+                -H 'X-Api-Key: your-api-key'
+            </div>
+
+            <h3>2. Получить статус чата с ботом</h3>
+            <div class='example'>
+                GET /api/Messenger/status?user_huid=USER_HUID
+                -H 'Authorization: Bearer YOUR_JWT_TOKEN'
+                -H 'X-Api-Key: your-api-key'
+            </div>
+
+            <h3>3. Отправить команду /help</h3>
+            <div class='example'>
+                POST /api/Messenger/command
+                -H 'X-Api-Key: your-api-key'
+                -H 'Content-Type: application/json'
+                {
+                    ""command"": ""/help"",
+                    ""sender"": ""User123""
                 }
             </div>
 
-            <h3>Отправка в группу по умолчанию</h3>
+            <h3>4. Создать заявку</h3>
             <div class='example'>
-                POST /api/Messenger/send-default<br/>
-                {<br/>
-                &nbsp;&nbsp;""text"": ""Сообщение в группу по умолчанию""<br/>
+                POST /api/Messenger/command
+                -H 'X-Api-Key: your-api-key'
+                -H 'Content-Type: application/json'
+                {
+                    ""command"": ""/create Не работает принтер Принтер не печатает, ошибка 49"",
+                    ""sender"": ""User123""
                 }
             </div>
 
-            <h3>Получение списка чатов</h3>
+            <h3>5. Проверить статус заявки</h3>
             <div class='example'>
-                GET /api/Messenger/chats?limit=10&offset=0
+                POST /api/Messenger/command
+                -H 'X-Api-Key: your-api-key'
+                -H 'Content-Type: application/json'
+                {
+                    ""command"": ""/status 12345"",
+                    ""sender"": ""User123""
+                }
             </div>
 
-            <h2>Групповой ChatId по умолчанию</h2>
+            <h3>6. Получить список заявок</h3>
+            <div class='example'>
+                POST /api/Messenger/command
+                -H 'X-Api-Key: your-api-key'
+                -H 'Content-Type: application/json'
+                {
+                    ""command"": ""/issues"",
+                    ""sender"": ""User123""
+                }
+            </div>
+
+            <h2>Доступные команды бота</h2>
             <div class='info'>
-                <p><strong>Chat ID:</strong> <code>*****</code></p>
-                <p><small>Этот ID используется в методе send-default</small></p>
+                <p><strong>/help</strong> - Показать справку</p>
+                <p><strong>/start</strong> - Начать работу</p>
+                <p><strong>/status [номер]</strong> - Статус заявки</p>
+                <p><strong>/create [тема] [описание]</strong> - Создать новую заявку</p>
+                <p><strong>/issues</strong> - Список ваших заявок</p>
+                <p><strong>/stop</strong> - Завершить сессию</p>
             </div>
 
-            <h2>Переменные окружения</h2>
+            <h2>Конфигурация в appsettings.json</h2>
             <div class='highlight'>
-                <p><code>EXPRESS_API_URL</code> - URL для вызовов к Express API</p>
-                <p><code>EXPRESS_API_KEY</code> - API ключ для аутентификации</p>
-                <p><code>PORT</code> - Порт сервера (по умолчанию 3000)</p>
+                <code>
+                    {
+                    ""ApiKey"": ""your-api-key"",
+                    ""ExpressSettings"": {
+                        ""ApiUrl"": ""https://x.ar-management.ru"",
+                        ""SecKey"": ""your-sec-key"",
+                        ""BotId"": ""your-bot-id""
+                    },
+                    ""RedmineSettings"": {
+                        ""BaseUrl"": ""https://your-redmine.com"",
+                        ""ApiToken"": ""your-redmine-token""
+                    }
+                    }
+                </code>
+            </div>
+
+            <h2>Переменные окружения для Docker</h2>
+            <div class='highlight'>
+                <p><code>EXPRESS_API_URL</code> - URL Express API</p>
+                <p><code>EXPRESS_API_KEY</code> - API ключ для Gateway</p>
+                <p><code>REDMINE_BASE_URL</code> - URL Redmine</p>
+                <p><code>REDMINE_API_TOKEN</code> - API токен Redmine</p>
+                <p><code>PORT</code> - Порт сервера (5000)</p>
+            </div>
+
+            <div class='success'>
+                <p><strong>Быстрая проверка:</strong></p>
+                <div class='highlight'>
+                    <code>curl -X GET ""http://localhost:5000/api/Messenger/health"" -H ""X-Api-Key: your-api-key""</code>
+                </div>
             </div>
         </div>
         ";
