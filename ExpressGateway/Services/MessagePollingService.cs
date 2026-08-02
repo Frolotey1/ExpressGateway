@@ -100,7 +100,7 @@ public class MessagePollingService : BackgroundService
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "❌ Error processing message from {Sender}", 
+                        _logger.LogError(ex, "Error processing message from {Sender}", 
                             message.Sender?.Name ?? "Unknown");
                     }
                 }

@@ -14,7 +14,6 @@ public class ExpressService : IExpressService
     private readonly string _apiUrl;
     private readonly string _secKey;
     private readonly string _botId;
-    private readonly string _chatId;
     private readonly HttpClient _httpClient;
     private string? _jwtToken;
 
@@ -35,8 +34,6 @@ public class ExpressService : IExpressService
             ?? throw new Exception("SecKey not configured");
         _botId = expressSettings["BotId"] 
             ?? throw new Exception("BotId not configured");
-        _chatId = expressSettings["ChatId"] 
-            ?? throw new Exception("ChatId not configured");
 
         _httpClient.BaseAddress = new Uri(_apiUrl);
     }
@@ -52,54 +49,54 @@ public class ExpressService : IExpressService
     }
 
     private async Task<string> GetJwtTokenAsync()
-{
-    try
     {
-        if (!string.IsNullOrEmpty(_jwtToken))
+        try
         {
-            _logger.LogDebug("Using existing JWT token");
+            if (!string.IsNullOrEmpty(_jwtToken))
+            {
+                _logger.LogDebug("Using existing JWT token");
+                return _jwtToken;
+            }
+
+            _jwtToken = null;
+
+            var signature = GenerateSignature(_botId, _secKey);
+            var url = $"/api/v2/botx/bots/{_botId}/token?signature={signature}";
+
+            _logger.LogInformation("Getting JWT token from: {Url}", url);
+
+            var response = await _httpClient.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to get JWT token. Status: {StatusCode}, Response: {Response}", 
+                    response.StatusCode, content);
+                throw new Exception($"Failed to get JWT token: {response.StatusCode} - {content}");
+            }
+
+            var json = JsonSerializer.Deserialize<JwtResponse>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (json?.Result == null || json.Status?.ToUpper() != "OK")
+            {
+                _logger.LogError("Invalid JWT response: {Response}", content);
+                throw new Exception($"Invalid JWT response: {content}");
+            }
+
+            _jwtToken = json.Result;
+            _logger.LogInformation("JWT token obtained successfully");
             return _jwtToken;
         }
-
-        _jwtToken = null;
-
-        var signature = GenerateSignature(_botId, _secKey);
-        var url = $"/api/v2/botx/bots/{_botId}/token?signature={signature}";
-
-        _logger.LogInformation("Getting JWT token from: {Url}", url);
-
-        var response = await _httpClient.GetAsync(url);
-        var content = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
+        catch (Exception ex)
         {
-            _logger.LogError("Failed to get JWT token. Status: {StatusCode}, Response: {Response}", 
-                response.StatusCode, content);
-            throw new Exception($"Failed to get JWT token: {response.StatusCode} - {content}");
+            _logger.LogError(ex, "Failed to get JWT token");
+            _jwtToken = null; 
+            throw;
         }
-
-        var json = JsonSerializer.Deserialize<JwtResponse>(content, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
-        if (json?.Result == null || json.Status?.ToUpper() != "OK")
-        {
-            _logger.LogError("Invalid JWT response: {Response}", content);
-            throw new Exception($"Invalid JWT response: {content}");
-        }
-
-        _jwtToken = json.Result;
-        _logger.LogInformation("JWT token obtained successfully");
-        return _jwtToken;
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Failed to get JWT token");
-        _jwtToken = null; 
-        throw;
-    }
-}
 
     public async Task<SendMessageResponse> SendMessageAsync(string chatId, string message, string? asset = null)
     {
@@ -174,68 +171,6 @@ public class ExpressService : IExpressService
         }
     }
 
-    public async Task<SendMessageResponse> SendToDefaultGroupAsync(string message)
-    {
-        _logger.LogInformation("Sending to default group: {ChatId}", _chatId);
-        return await SendMessageAsync(_chatId, message);
-    }
-
-    public async Task<PingResponse> PingAsync()
-    {
-        try
-        {
-            await GetJwtTokenAsync();
-            
-            return new PingResponse
-            {
-                Status = "ok",
-                Message = "pong"
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Ping failed");
-            return new PingResponse
-            {
-                Status = "error",
-                Message = ex.Message
-            };
-        }
-    }
-
-    public async Task<List<IncomingMessage>> GetMessagesAsync(string chatId, int limit = 50, int offset = 0)
-    {
-        try
-        {
-            var jwtToken = await GetJwtTokenAsync();
-            var url = $"/api/v4/chats/{chatId}/messages?limit={limit}&offset={offset}";
-
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("Authorization", $"Bearer {jwtToken}");
-
-            var response = await _httpClient.SendAsync(request);
-            var json = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("Failed to get messages: {StatusCode}", response.StatusCode);
-                return new List<IncomingMessage>();
-            }
-
-            var result = JsonSerializer.Deserialize<MessagesResponse>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            return result?.Messages ?? new List<IncomingMessage>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get messages for chat {ChatId}", chatId);
-            return new List<IncomingMessage>();
-        }
-    }
-
     public async Task<List<IncomingMessage>> GetNewMessagesAsync(string chatId, DateTime? since = null)
     {
         try
@@ -243,7 +178,7 @@ public class ExpressService : IExpressService
             var jwtToken = await GetJwtTokenAsync();
             
             var sinceParam = since ?? DateTime.UtcNow.AddMinutes(-5);
-            var url = $"/api/v4/chats/{chatId}/messages?since={sinceParam:yyyy-MM-ddTHH:mm:ssZ}";
+            var url = $"/api/v4/botx/chats/{chatId}/messages";
 
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Add("Authorization", $"Bearer {jwtToken}");
@@ -268,6 +203,28 @@ public class ExpressService : IExpressService
         {
             _logger.LogError(ex, "Failed to get new messages for chat {ChatId}", chatId);
             return new List<IncomingMessage>();
+        }
+    }
+    public async Task<PingResponse> PingAsync()
+    {
+        try
+        {
+            await GetJwtTokenAsync();
+            
+            return new PingResponse
+            {
+                Status = "ok",
+                Message = "pong"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Ping failed");
+            return new PingResponse
+            {
+                Status = "error",
+                Message = ex.Message
+            };
         }
     }
 

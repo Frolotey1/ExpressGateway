@@ -70,48 +70,6 @@ public class MessengerController : ControllerBase
         }
     }
 
-    [HttpGet("messages/{chatId}")]
-    public async Task<IActionResult> GetMessages(string chatId, [FromQuery] int limit = 50, [FromQuery] int offset = 0)
-    {
-        try
-        {
-            var messages = await _expressService.GetMessagesAsync(chatId, limit, offset);
-            return Ok(new
-            {
-                success = true,
-                chatId = chatId,
-                count = messages.Count,
-                messages = messages
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting messages");
-            return StatusCode(500, new { error = ex.Message });
-        }
-    }
-
-    [HttpGet("messages/new/{chatId}")]
-    public async Task<IActionResult> GetNewMessages(string chatId, [FromQuery] DateTime? since)
-    {
-        try
-        {
-            var messages = await _expressService.GetNewMessagesAsync(chatId, since);
-            return Ok(new
-            {
-                success = true,
-                chatId = chatId,
-                count = messages.Count,
-                messages = messages
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting new messages");
-            return StatusCode(500, new { error = ex.Message });
-        }
-    }
-
     [HttpGet("health")]
     public async Task<IActionResult> Health()
     {
@@ -167,7 +125,7 @@ public class MessengerController : ControllerBase
                 ? chat.GetString() 
                 : null;
 
-            var result = await _redmineBotService.ProcessMessageAsync(command!, senderName, chatId);
+            var result = await _redmineBotService.ProcessMessageAsync(command!, senderName);
             
             _logger.LogInformation($"{DateTime.UtcNow} End Send Command {result}");
             return Accepted(new { result = "accepted", response = result });

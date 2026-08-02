@@ -27,7 +27,7 @@ public class RedmineBotService : IRedmineBotService
         };
     }
 
-    public async Task<string> ProcessMessageAsync(string message, string senderName, string? chatId = null)
+    public async Task<string> ProcessMessageAsync(string message, string senderName)
     {
         try
         {
