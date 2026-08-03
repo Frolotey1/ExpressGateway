@@ -40,21 +40,6 @@ public class MessengerController : ControllerBase
         }
     }
 
-    [HttpPost("send-default")]
-    public async Task<IActionResult> SendDefault([FromBody] SendDefaultMessageRequest request)
-    {
-        try
-        {
-            var result = await _expressService.SendToDefaultGroupAsync(request.Message);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error sending default message");
-            return StatusCode(500, new { error = ex.Message });
-        }
-    }
-
     [HttpGet("ping")]
     public async Task<IActionResult> Ping()
     {

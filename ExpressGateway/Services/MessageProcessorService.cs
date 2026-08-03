@@ -24,34 +24,34 @@ public class MessageProcessorService
     }
 
     public async Task ProcessIncomingMessageAsync(IncomingMessage message)
-{
-    try
     {
-        var messageText = message.Text ?? message.Body ?? "Без текста";
-        var senderName = message.Sender?.Name ?? "Пользователь";
-        
-        _logger.LogInformation("Processing message from {Sender}: {Text}", senderName, messageText);
-
-        var response = await _redmineBotService.ProcessMessageAsync(messageText, senderName);
-
-        if (!string.IsNullOrEmpty(message.ChatId) && !string.IsNullOrEmpty(response))
+        try
         {
-            await _expressService.SendMessageAsync(message.ChatId, response);
-            _logger.LogInformation("Response sent to Express: {Response}", response);
+            var messageText = message.Text ?? message.Body ?? "Без текста";
+            var senderName = message.Sender?.Name ?? "Пользователь";
+            
+            _logger.LogInformation("Processing message from {Sender}: {Text}", senderName, messageText);
+
+            var response = await _redmineBotService.ProcessMessageAsync(messageText, senderName);
+
+            if (!string.IsNullOrEmpty(message.ChatId) && !string.IsNullOrEmpty(response))
+            {
+                await _expressService.SendMessageAsync(message.ChatId, response);
+                _logger.LogInformation("Response sent to Express: {Response}", response);
+            }
+            else
+            {
+                _logger.LogWarning("No ChatId in message, response not sent");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            _logger.LogWarning("No ChatId in message, response not sent");
+            _logger.LogError(ex, "Error processing message");
+            
+            if (!string.IsNullOrEmpty(message.ChatId))
+            {
+                await _expressService.SendMessageAsync(message.ChatId, $"Ошибка: {ex.Message}");
+            }
         }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error processing message");
-        
-        if (!string.IsNullOrEmpty(message.ChatId))
-        {
-            await _expressService.SendMessageAsync(message.ChatId, $"Ошибка: {ex.Message}");
-        }
-    }
-}
 }

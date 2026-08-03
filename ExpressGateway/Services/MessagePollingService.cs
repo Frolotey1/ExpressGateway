@@ -112,7 +112,7 @@ public class MessagePollingService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error polling messages");
+            _logger.LogError(ex, "Error polling messages");
         }
         finally
         {
