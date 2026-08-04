@@ -70,9 +70,14 @@ public class ApiKeyMiddleware
 
     private static bool IsPublicEndpoint(string path)
     {
-        return path.StartsWith("/swagger") ||
-               path.StartsWith("/health") ||
-               path == "/" ||
-               path.StartsWith("/info");
+        var lowerPath = path.ToLowerInvariant();
+        
+        return lowerPath.StartsWith("/swagger") ||
+               lowerPath.StartsWith("/health") ||
+               lowerPath == "/" ||
+               lowerPath.StartsWith("/info") ||
+               lowerPath.StartsWith("/api/messenger/health") ||
+               lowerPath.StartsWith("/api/messenger/status") ||
+               lowerPath.StartsWith("/api/messenger/command");
     }
 }

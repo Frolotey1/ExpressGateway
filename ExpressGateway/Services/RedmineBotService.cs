@@ -1,3 +1,4 @@
+// Services/Redmine/RedmineBotService.cs
 using ExpressGateway.Services.Redmine.Models;
 
 namespace ExpressGateway.Services.Redmine;
@@ -8,6 +9,12 @@ public class RedmineBotService : IRedmineBotService
     private readonly ILogger<RedmineBotService> _logger;
     private readonly Dictionary<string, Func<string[], Task<string>>> _commands;
     private readonly Dictionary<string, string> _userStates = new();
+    private readonly Dictionary<string, DateTime> _blockedUsers = new();
+    private readonly Dictionary<string, int> _errorCount = new();
+    private readonly Dictionary<string, string> _sessions = new();
+    private readonly Dictionary<string, object> _sessionData = new();
+    private const int BlockTimeSeconds = 600;
+    private const int InactivityTimerSeconds = 120;
 
     public RedmineBotService(
         IRedmineService redmineService,
@@ -19,11 +26,19 @@ public class RedmineBotService : IRedmineBotService
         _commands = new Dictionary<string, Func<string[], Task<string>>>
         {
             ["/start"] = HandleStartAsync,
+            ["/stop"] = HandleStopAsync,
             ["/help"] = HandleHelpAsync,
             ["/status"] = HandleStatusAsync,
-            ["/create"] = HandleCreateAsync,
+            ["/status_with_token"] = HandleStatusWithTokenAsync,
             ["/issues"] = HandleIssuesAsync,
-            ["/stop"] = HandleStopAsync
+            ["/create_issue"] = HandleCreateIssueAsync,
+            ["/custom_fields"] = HandleCustomFieldsAsync,
+            ["/issue_direction"] = HandleIssueDirectionAsync,
+            ["/add_direction"] = HandleAddDirectionAsync,
+            ["/choise"] = HandleChoiseAsync,
+            ["/add_attachment"] = HandleAddAttachmentAsync,
+            ["/get_custom_field"] = HandleGetCustomFieldAsync,
+            ["/create_issue_custom_fields"] = HandleCreateIssueCustomFieldsAsync
         };
     }
 
@@ -33,8 +48,13 @@ public class RedmineBotService : IRedmineBotService
         {
             _logger.LogInformation("Processing message from {Sender}: {Message}", senderName, message);
 
+            if (IsUserBlocked(senderName))
+                return $"Вы заблокированы на {BlockTimeSeconds / 60} минут";
+
             if (string.IsNullOrWhiteSpace(message))
                 return "Пожалуйста, напишите сообщение.";
+
+            StartInactivityTimer(senderName);
 
             if (message.StartsWith("/"))
             {
@@ -45,15 +65,13 @@ public class RedmineBotService : IRedmineBotService
                 if (_commands.TryGetValue(command, out var handler))
                     return await handler(args);
 
-                return await HandleUnknownCommandAsync(args);
+                return await HandleUnknownCommandAsync(args, senderName);
             }
 
             if (_userStates.TryGetValue(senderName, out var state))
-            {
                 return await HandleStateAsync(state, message, senderName);
-            }
 
-            return await AnalyzeAndRespondAsync(message, senderName);
+            return await HandleMessageAsync(message, senderName);
         }
         catch (Exception ex)
         {
@@ -61,171 +79,7 @@ public class RedmineBotService : IRedmineBotService
             return $"Произошла ошибка: {ex.Message}";
         }
     }
-
-    private async Task<string> AnalyzeAndRespondAsync(string message, string senderName)
-    {
-        if (message.Contains("задача", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("тикет", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("создать", StringComparison.OrdinalIgnoreCase))
-        {
-            return await StartIssueCreationAsync(senderName);
-        }
-
-        if (message.Contains("статус", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("проверить", StringComparison.OrdinalIgnoreCase))
-        {
-            return await GetUserIssuesAsync(null, null);
-        }
-
-        if (message.Contains("помощь", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("help", StringComparison.OrdinalIgnoreCase))
-        {
-            return await GetHelpAsync();
-        }
-
-        if (message.Contains("привет", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("здравствуйте", StringComparison.OrdinalIgnoreCase))
-        {
-            return await GetGreetingAsync(senderName);
-        }
-
-        if (message.Contains("список", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("все задачи", StringComparison.OrdinalIgnoreCase))
-        {
-            return await GetUserIssuesAsync(null, null);
-        }
-
-        return "Я не понял ваш запрос. Напишите /help для списка доступных команд.";
-    }
-
-    private async Task<string> StartIssueCreationAsync(string userName)
-    {
-        _userStates[userName] = "creating_issue_subject";
-        return "Для создания заявки напишите тему (краткое описание проблемы):\n" +
-               "Например: 'Не работает принтер в отделе разработки'";
-    }
-
-    private async Task<string> HandleStateAsync(string state, string input, string userName)
-    {
-        switch (state)
-        {
-            case "creating_issue_subject":
-                _userStates[userName] = "creating_issue_description";
-                return $"Тема: {input}\n\nТеперь напишите описание заявки (подробности проблемы):";
-
-            case "creating_issue_description":
-                _userStates.Remove(userName);
-                return await CreateIssueAsync(input, "Описание заявки от пользователя", null);
-        }
-
-        _userStates.Remove(userName);
-        return "Состояние сброшено. Напишите /help для списка команд.";
-    }
-
-    public async Task<string> GetIssueStatusAsync(int issueId)
-    {
-        try
-        {
-            var issue = await _redmineService.GetIssueAsync(issueId);
-            if (issue == null)
-                return $"Заявка #{issueId} не найдена.";
-
-            return $"Заявка #{issue.Id}\n" +
-                   $"Тема: {issue.Subject}\n" +
-                   $"Статус: {issue.Status?.Name ?? "Не указан"}\n" +
-                   $"Приоритет: {issue.Priority?.Name ?? "Не указан"}\n" +
-                   $"Проект: {issue.Project?.Name ?? "Не указан"}\n" +
-                   $"Создана: {issue.CreatedOn:dd.MM.yyyy HH:mm}";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get issue status");
-            return $"Ошибка получения статуса заявки: {ex.Message}";
-        }
-    }
-
-    public async Task<string> CreateIssueAsync(string subject, string description, string? categoryId = null)
-    {
-        try
-        {
-            var issue = new RedmineIssue
-            {
-                Subject = subject,
-                Description = description,
-                Project = await _redmineService.GetProjectAsync("req")
-            };
-
-            if (issue.Project == null)
-                return "Не удалось найти проект для создания заявки.";
-
-            var created = await _redmineService.CreateIssueAsync(issue);
-            return $"Заявка успешно создана!\n" +
-                   $"Номер: #{created.Id}\n" +
-                   $"Тема: {created.Subject}\n" +
-                   $"Для проверки статуса используйте: /status {created.Id}";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create issue");
-            return $"Ошибка создания заявки: {ex.Message}";
-        }
-    }
-
-    public async Task<string> GetUserIssuesAsync(string? city = null, string? department = null)
-    {
-        try
-        {
-            var issues = await _redmineService.GetIssuesAsync();
-            
-            if (!issues.Any())
-                return "У вас нет активных заявок.";
-
-            var result = $"Ваши заявки ({issues.Count}):\n" +
-                        "─────────────────────\n";
-
-            foreach (var issue in issues.Take(10))
-            {
-                result += $"#{issue.Id} | {issue.Status?.Name ?? "Не указан"} | {issue.Subject}\n";
-            }
-
-            if (issues.Count > 10)
-                result += $"... и еще {issues.Count - 10} заявок";
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get user issues");
-            return $"Ошибка получения списка заявок: {ex.Message}";
-        }
-    }
-
-    public async Task<string> GetHelpAsync()
-    {
-        return "Доступные команды:\n" +
-               "/start - начать работу\n" +
-               "/help - показать эту справку\n" +
-               "/status [номер] - статус заявки\n" +
-               "/create - создать новую заявку\n" +
-               "/issues - список ваших заявок\n" +
-               "/stop - завершить сессию\n\n" +
-               "Вы также можете использовать обычные сообщения:\n" +
-               "- 'Создать заявку' - начать создание\n" +
-               "- 'Статус заявки' - список заявок\n" +
-               "- 'Помощь' - показать справку";
-    }
-
-    public async Task<string> GetGreetingAsync(string? userName = null)
-    {
-        var greeting = GetTimeBasedGreeting();
-        var welcome = string.IsNullOrEmpty(userName) 
-            ? "Добро пожаловать в Redmine бот!" 
-            : $"Добро пожаловать, {userName}!";
-
-        return $"{greeting}, {welcome}\n\n{await GetHelpAsync()}";
-    }
-
-    private string GetTimeBasedGreeting()
+    private string GetTimeOfDay()
     {
         var hour = DateTime.Now.Hour;
         return hour switch
@@ -237,48 +91,373 @@ public class RedmineBotService : IRedmineBotService
             _ => "Здравствуйте"
         };
     }
+
+    private string TimeToFrase() => GetTimeOfDay();
+    public async Task<string> CreateIssueAsync(string subject, string description, string? categoryId = null)
+    {
+        try
+        {
+            var project = await _redmineService.GetProjectAsync("req");
+            if (project == null)
+                return "Не удалось найти проект для создания заявки.";
+
+            var issue = new RedmineIssue
+            {
+                Subject = subject,
+                Description = description,
+                Project = project,
+                Tracker = new RedmineTracker { Id = 1 },
+                Status = new RedmineStatus { Id = 1 },
+                Priority = new RedminePriority { Id = 2 }
+            };
+
+            if (!string.IsNullOrEmpty(categoryId) && int.TryParse(categoryId, out var catId))
+            {
+                issue.CategoryId = catId;
+            }
+
+            var created = await _redmineService.CreateIssueAsync(issue);
+            return $"Заявка успешно создана! Номер вашей заявки: {created.Id}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create issue");
+            return $"Ошибка создания заявки: {ex.Message}";
+        }
+    }
+
+    private void StartInactivityTimer(string senderName)
+    {
+        _sessions[senderName] = "active";
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(InactivityTimerSeconds * 1000);
+            if (_sessions.TryGetValue(senderName, out var state) && state == "active")
+            {
+                _sessions.Remove(senderName);
+                _logger.LogInformation("Inactivity timer triggered for {Sender}", senderName);
+            }
+        });
+    }
+
+    private bool IsUserBlocked(string senderName)
+    {
+        if (_blockedUsers.TryGetValue(senderName, out var blockTime))
+        {
+            if ((DateTime.UtcNow - blockTime).TotalSeconds < BlockTimeSeconds)
+                return true;
+            
+            _blockedUsers.Remove(senderName);
+            _errorCount.Remove(senderName);
+        }
+        return false;
+    }
+
+    private async Task<string> BlockUserAsync(string senderName)
+    {
+        _blockedUsers[senderName] = DateTime.UtcNow;
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(BlockTimeSeconds * 1000);
+            _blockedUsers.Remove(senderName);
+            _errorCount.Remove(senderName);
+        });
+        return $"Вы заблокированы на {BlockTimeSeconds / 60} минут";
+    }
+
+    private void IncrementErrorCount(string senderName)
+    {
+        if (!_errorCount.ContainsKey(senderName))
+            _errorCount[senderName] = 0;
+        _errorCount[senderName]++;
+        if (_errorCount[senderName] >= 3)
+            _ = BlockUserAsync(senderName);
+    }
     private async Task<string> HandleStartAsync(string[] args)
     {
-        return await GetGreetingAsync();
+        var senderName = args.Length > 0 ? args[0] : "default";
+        _errorCount.Remove(senderName);
+        _blockedUsers.Remove(senderName);
+        _userStates.Remove(senderName);
+        _sessions.Remove(senderName);
+
+        var greeting = TimeToFrase();
+        return $"{greeting}! Приветствую!\n\n" +
+               "Доступные команды:\n" +
+               "/start - начать работу\n" +
+               "/stop - завершить сессию\n" +
+               "/help - показать справку\n" +
+               "/status [номер] - статус заявки\n" +
+               "/status_with_token - статус с токеном\n" +
+               "/issues - список ваших заявок\n" +
+               "/create_issue - создать новую заявку\n" +
+               "/custom_fields - кастомные поля\n" +
+               "/issue_direction - направление заявки\n" +
+               "/add_direction - добавить направление\n" +
+               "/choise - выбор\n" +
+               "/add_attachment - добавить вложение\n" +
+               "/get_custom_field - получить кастомное поле\n" +
+               "/create_issue_custom_fields - создать кастомное поле";
     }
-
-    private async Task<string> HandleHelpAsync(string[] args)
-    {
-        return await GetHelpAsync();
-    }
-
-    private async Task<string> HandleStatusAsync(string[] args)
-    {
-        if (args.Length == 0 || !int.TryParse(args[0], out var issueId))
-            return "Пожалуйста, укажите номер заявки: /status 12345";
-
-        return await GetIssueStatusAsync(issueId);
-    }
-
-    private async Task<string> HandleCreateAsync(string[] args)
-    {
-        if (args.Length < 2)
-            return "Используйте: /create [тема] [описание]\n" +
-                   "Например: /create Не работает принтер Нет питания в розетке";
-
-        var subject = args[0];
-        var description = string.Join(" ", args.Skip(1));
-        
-        return await CreateIssueAsync(subject, description);
-    }
-
-    private async Task<string> HandleIssuesAsync(string[] args)
-    {
-        return await GetUserIssuesAsync();
-    }
-
     private async Task<string> HandleStopAsync(string[] args)
     {
-        return "Работа бота завершена. Для начала работы используйте /start";
+        var senderName = args.Length > 0 ? args[0] : "default";
+        _userStates.Remove(senderName);
+        _errorCount.Remove(senderName);
+        _blockedUsers.Remove(senderName);
+        _sessions.Remove(senderName);
+        return "До свидания!";
     }
-
-    private async Task<string> HandleUnknownCommandAsync(string[] args)
+    private async Task<string> HandleHelpAsync(string[] args)
     {
+        return "Доступные команды:\n" +
+               "/start - начать работу\n" +
+               "/stop - завершить сессию\n" +
+               "/help - показать эту справку\n" +
+               "/status [номер] - статус заявки\n" +
+               "/status_with_token - статус с токеном\n" +
+               "/issues - список ваших заявок\n" +
+               "/create_issue - создать новую заявку\n" +
+               "/custom_fields - кастомные поля\n" +
+               "/issue_direction - направление заявки\n" +
+               "/add_direction - добавить направление\n" +
+               "/choise - выбор\n" +
+               "/add_attachment - добавить вложение\n" +
+               "/get_custom_field - получить кастомное поле\n" +
+               "/create_issue_custom_fields - создать кастомное поле";
+    }
+    private async Task<string> HandleStatusAsync(string[] args)
+    {
+        if (args.Length == 0)
+            return "Введите ФИО для поиска заявки:";
+
+        if (int.TryParse(args[0], out var issueId))
+            return await GetIssueStatusAsync(issueId);
+
+        return "Пожалуйста, укажите номер заявки: /status 12345";
+    }
+    private async Task<string> HandleStatusWithTokenAsync(string[] args)
+    {
+        var senderName = args.Length > 0 ? args[0] : "default";
+        if (_userStates.TryGetValue(senderName + "_token", out var token) && token != "no_data")
+            return "Введите номер заявки в формате 98765432121 (только цифры)";
+        return "Для начала выполните /status";
+    }
+    private async Task<string> HandleIssuesAsync(string[] args)
+    {
+        try
+        {
+            var issues = await _redmineService.GetIssuesAsync();
+            if (!issues.Any())
+                return "У вас нет активных заявок.";
+
+            var result = $"Ваши заявки ({issues.Count}):\n─────────────────────\n";
+            foreach (var issue in issues.Take(10))
+                result += $"#{issue.Id} | {issue.Status?.Name ?? "Не указан"} | {issue.Subject}\n";
+            if (issues.Count > 10)
+                result += $"... и еще {issues.Count - 10} заявок";
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return $"Ошибка: {ex.Message}";
+        }
+    }
+    private async Task<string> HandleCreateIssueAsync(string[] args)
+    {
+        if (args.Length < 2)
+            return "Используйте: /create_issue [тема] [описание]";
+        return await CreateIssueAsync(args[0], string.Join(" ", args.Skip(1)));
+    }
+    private async Task<string> HandleCustomFieldsAsync(string[] args)
+    {
+        try
+        {
+            var fields = await _redmineService.GetCustomFieldsAsync("req");
+            if (!fields.Any())
+                return "Кастомные поля не найдены.";
+            var result = "Доступные кастомные поля:\n─────────────────────\n";
+            foreach (var field in fields)
+                result += $"ID: {field.Id} | {field.Name}\n";
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return $"Ошибка: {ex.Message}";
+        }
+    }
+    private async Task<string> HandleIssueDirectionAsync(string[] args)
+    {
+        try
+        {
+            var categories = await _redmineService.GetIssueCategoriesAsync("req");
+            if (!categories.Any())
+                return "Категории не найдены.";
+            var result = "Выберите направление:\n─────────────────────\n";
+            foreach (var category in categories)
+                result += $"ID: {category.Id} | {category.Name}\n";
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return $"Ошибка: {ex.Message}";
+        }
+    }
+    private async Task<string> HandleAddDirectionAsync(string[] args)
+    {
+        if (args.Length == 0)
+            return "Используйте: /add_direction [направление]";
+        var senderName = args.Length > 0 ? args[0] : "default";
+        _sessionData[senderName + "_direction"] = args[0];
+        return $"Направление {args[0]} выбрано. Отправить заявку?";
+    }
+    private async Task<string> HandleChoiseAsync(string[] args)
+    {
+        return "Добавить дополнительные сведения?";
+    }
+    private async Task<string> HandleAddAttachmentAsync(string[] args)
+    {
+        return "Загрузите файл для прикрепления к заявке.";
+    }
+    private async Task<string> HandleGetCustomFieldAsync(string[] args)
+    {
+        if (args.Length == 0)
+            return "Используйте: /get_custom_field [id]";
+        if (!int.TryParse(args[0], out var id))
+            return "Введите числовой ID";
+        try
+        {
+            var fields = await _redmineService.GetCustomFieldsAsync("req");
+            var field = fields.FirstOrDefault(f => f.Id == id);
+            return field != null 
+                ? $"Поле: {field.Name}\nID: {field.Id}\nФормат: {field.FieldFormat}\nОбязательное: {field.IsRequired}"
+                : "Поле не найдено";
+        }
+        catch (Exception ex)
+        {
+            return $"Ошибка: {ex.Message}";
+        }
+    }
+    private async Task<string> HandleCreateIssueCustomFieldsAsync(string[] args)
+    {
+        if (args.Length < 2)
+            return "Используйте: /create_issue_custom_fields [id] [значение]";
+        var senderName = args.Length > 0 ? args[0] : "default";
+        var id = args[0];
+        var value = string.Join(" ", args.Skip(1));
+        return $"Кастомное поле {id} установлено в: {value}";
+    }
+    private async Task<string> HandleStateAsync(string state, string input, string userName)
+    {
+        switch (state)
+        {
+            case "set_last_name":
+                var parts = input.Split(' ');
+                if (parts.Length >= 2)
+                {
+                    _userStates[userName + "_firstname"] = parts[0];
+                    _userStates[userName + "_lastname"] = parts[1];
+                    if (parts.Length >= 3)
+                        _userStates[userName + "_other_name"] = parts[2];
+                    _userStates[userName] = "enter_city";
+                    return "Введите ваш город:";
+                }
+                return "Введите ФИО (Имя Фамилия Отчество):";
+
+            case "enter_city":
+                _userStates[userName + "_city"] = input;
+                _userStates.Remove(userName);
+                var fio = $"{_userStates[userName + "_firstname"]} {_userStates[userName + "_lastname"]}";
+                var user = await _redmineService.GetUserByFullNameAsync(
+                    _userStates[userName + "_firstname"],
+                    _userStates[userName + "_lastname"]
+                );
+                if (user != null)
+                    return $"{TimeToFrase()} {fio}, для продолжения оформления заявки, новым сообщением напишите тему Вашей заявки.";
+                return $"Пользователь {fio} не найден в системе!";
+                
+            case "create_issue_subject":
+                _userStates[userName + "_new_issue_description"] = input;
+                _userStates.Remove(userName);
+                return await CreateIssueAsync(
+                    _userStates[userName + "_new_issue_subject"],
+                    input
+                );
+        }
+        _userStates.Remove(userName);
+        return "Состояние сброшено. Напишите /help для списка команд.";
+    }
+    private async Task<string> HandleMessageAsync(string message, string senderName)
+    {
+        var lower = message.ToLower();
+
+        switch (lower)
+        {
+            case "список доступных комманд":
+                return await HandleHelpAsync(new string[] { });
+            case "создать заявку":
+                return await HandleCreateIssueAsync(new string[] { });
+            case "узнать статус заявки":
+                return "Введите номер заявки: /status 12345";
+            default:
+                IncrementErrorCount(senderName);
+                if (IsUserBlocked(senderName))
+                    return $"Вы заблокированы на {BlockTimeSeconds / 60} минут";
+                return "Возможно вы имели ввиду?\n/start - начать работу\n/help - показать справку\n/status [номер] - статус заявки\n/issues - список ваших заявок\n/create_issue - создать новую заявку\n/stop - завершить сессию";
+        }
+    }
+    private async Task<string> HandleUnknownCommandAsync(string[] args, string senderName)
+    {
+        IncrementErrorCount(senderName);
+        if (IsUserBlocked(senderName))
+            return $"Вы заблокированы на {BlockTimeSeconds / 60} минут";
         return "Неизвестная команда. Напишите /help для списка доступных команд.";
     }
+    public async Task<string> GetIssueStatusAsync(int issueId)
+    {
+        try
+        {
+            var issue = await _redmineService.GetIssueAsync(issueId);
+            if (issue == null) return $"Заявка #{issueId} не найдена.";
+            return $"Заявка #{issue.Id}\nПроект: {issue.Project?.Name ?? "Не указан"}\nТип: {issue.Tracker?.Name ?? "Не указан"}\nСтатус: {issue.Status?.Name ?? "Не указан"}\nПриоритет: {issue.Priority?.Name ?? "Не указан"}\nАвтор: {issue.Author?.FullName ?? "Не указан"}\nТема: {issue.Subject}\nОписание: {issue.Description}\nСоздана: {issue.CreatedOn:dd.MM.yyyy HH:mm}";
+        }
+        catch (Exception ex)
+        {
+            return $"Ошибка: {ex.Message}";
+        }
+    }
+
+    public async Task<string> CreateIssueAsync(string subject, string description)
+    {
+        try
+        {
+            var project = await _redmineService.GetProjectAsync("req");
+            if (project == null) return "Не удалось найти проект для создания заявки.";
+
+            var issue = new RedmineIssue
+            {
+                Subject = subject,
+                Description = description,
+                Project = project,
+                Tracker = new RedmineTracker { Id = 1 },
+                Status = new RedmineStatus { Id = 1 },
+                Priority = new RedminePriority { Id = 2 }
+            };
+
+            var created = await _redmineService.CreateIssueAsync(issue);
+            return $"Заявка успешно создана! Номер: {created.Id}";
+        }
+        catch (Exception ex)
+        {
+            return $"Ошибка: {ex.Message}";
+        }
+    }
+
+    public async Task<string> GetUserIssuesAsync(string? city = null, string? department = null)
+        => await HandleIssuesAsync(new string[] { });
+
+    public async Task<string> GetHelpAsync() => await HandleHelpAsync(new string[] { });
+
+    public async Task<string> GetGreetingAsync(string? userName = null)
+        => $"{TimeToFrase()}! {userName ?? "Добро пожаловать"}!";
 }
