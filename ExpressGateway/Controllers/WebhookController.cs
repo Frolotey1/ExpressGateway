@@ -24,65 +24,67 @@ public class WebhookController : ControllerBase
         _expressService = expressService;
     }
 
-    [HttpPost("express")] 
+    [HttpPost("express")]
     public async Task<IActionResult> HandleExpressWebhook([FromBody] JsonElement payload)
     {
         var requestId = Guid.NewGuid().ToString();
         try
         {
             _logger.LogInformation("[{RequestId}] Webhook received", requestId);
-                
+            
             var userHuid = payload.TryGetProperty("user_huid", out var huid) 
                 ? huid.GetString() 
                 : null;
-                
+            
             var chatId = payload.TryGetProperty("chat_id", out var chat) 
                 ? chat.GetString() 
                 : null;
-                
+            
             var messageText = payload.TryGetProperty("text", out var text) 
                 ? text.GetString() 
                 : null;
-                
-            var senderName = "Пользователь";
-            if (payload.TryGetProperty("sender", out var sender))
-            {
-                senderName = sender.TryGetProperty("name", out var name) 
-                    ? name.GetString() ?? "Пользователь" 
-                    : "Пользователь";
-            }
 
-            _logger.LogInformation(
-                "[{RequestId}] Автоматический user_huid: {UserHuid}, 📱 chat_id: {ChatId}, Команда: {Text}", 
-                requestId, userHuid ?? "null", chatId ?? "null", messageText ?? "null");
+            if (string.IsNullOrEmpty(userHuid))
+            {
+                _logger.LogWarning("[{RequestId}] No user_huid in webhook", requestId);
+                return BadRequest(new { error = "user_huid is required" });
+            }
 
             if (string.IsNullOrEmpty(messageText))
             {
                 return Ok(new { status = "ok", message = "Empty message ignored" });
             }
 
-            var senderId = userHuid ?? senderName;
-
-            var response = await _redmineBotService.ProcessMessageAsync(messageText, senderId);
-                
-            _logger.LogInformation("[{RequestId}] Ответ бота: {Response}", requestId, response);
-
-            if (!string.IsNullOrEmpty(response) && !string.IsNullOrEmpty(chatId))
+            if (string.IsNullOrEmpty(chatId))
             {
-                var sendResult = await _expressService.SendMessageAsync(chatId, response);
+                _logger.LogInformation("[{RequestId}] chat_id not in webhook, getting from Express for user: {UserHuid}", 
+                    requestId, userHuid);
                     
-                if (sendResult.Success)
+                
+                var chatInfo = await _expressService.GetBotChatAsync(userHuid);
+                
+                var chatData = JsonSerializer.Deserialize<JsonElement>(chatInfo);
+                if (chatData.TryGetProperty("result", out var result) && 
+                    result.TryGetProperty("group_chat_id", out var chatIdElement))
                 {
-                    _logger.LogInformation("[{RequestId}] Ответ отправлен в чат: {ChatId}", requestId, chatId);
+                    chatId = chatIdElement.GetString();
+                    _logger.LogInformation("[{RequestId}] Found chat_id: {ChatId} for user: {UserHuid}", 
+                        requestId, chatId, userHuid);
                 }
                 else
                 {
-                    _logger.LogError("[{RequestId}] Ошибка отправки: {Error}", requestId, sendResult.Error);
+                    _logger.LogError("[{RequestId}] Failed to get chat_id for user: {UserHuid}", 
+                        requestId, userHuid);
+                    return Ok(new { status = "error", message = "Cannot find chat for user" });
                 }
             }
-            else
+
+            var response = await _redmineBotService.ProcessMessageAsync(messageText, userHuid);
+            
+            if (!string.IsNullOrEmpty(response) && !string.IsNullOrEmpty(chatId))
             {
-                _logger.LogWarning("[{RequestId}] Нет ответа или chat_id", requestId);
+                await _expressService.SendMessageAsync(chatId, response);
+                _logger.LogInformation("[{RequestId}] Response sent to chat: {ChatId}", requestId, chatId);
             }
 
             return Ok(new { 
@@ -95,7 +97,7 @@ public class WebhookController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{RequestId}] Ошибка webhook", requestId);
+            _logger.LogError(ex, "[{RequestId}] Error processing webhook", requestId);
             return Ok(new { status = "error", message = ex.Message, requestId });
         }
     }
