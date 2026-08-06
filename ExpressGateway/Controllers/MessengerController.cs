@@ -69,89 +69,52 @@ public class MessengerController : ControllerBase
         {
             _logger.LogInformation($"{DateTime.UtcNow} Start Get Status");
             _logger.LogInformation($"{DateTime.UtcNow} {Request.QueryString.Value}");
-            _logger.LogInformation($"{DateTime.UtcNow} {string.Join(";", Request.Headers.Select(h => $"{h.Key}:{h.Value}"))}");
 
             var reqParams = Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString());
-            var headers = new Dictionary<string, string>();
+            var userHuid = reqParams.GetValueOrDefault("user_huid", "");
 
-            if (!string.IsNullOrEmpty(authorization))
+            if (string.IsNullOrEmpty(userHuid))
             {
-                headers["authorization"] = authorization;
+                return BadRequest(new { error = "user_huid is required" });
             }
 
-            var result = await GetBotChatAsync(
-                reqParams.GetValueOrDefault("user_huid", ""),
-                headers
-            );
+            var result = await _expressService.GetBotChatAsync(userHuid);
 
-            _logger.LogInformation($"{DateTime.UtcNow} End Get Status {result}");
-            return new JsonResult(result);
+            _logger.LogInformation($"{DateTime.UtcNow} End Get Status");
+            return Ok(result);
         }
         catch (Exception ex)
         {
             _logger.LogError($"{DateTime.UtcNow} ERROR Get Status {ex}");
-            Response.StatusCode = 500;
-            return new JsonResult(new { error = ex.Message });
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
     [HttpPost("command")]
-    public async Task<IActionResult> SendCommand([FromBody] JsonElement requestBody)
+    public async Task<IActionResult> SendCommand([FromBody] CommandRequest request)
     {
         try
         {
             _logger.LogInformation($"{DateTime.UtcNow} Start Send Command");
             
-            var command = requestBody.GetProperty("command").GetString();
-            var senderName = requestBody.TryGetProperty("sender", out var sender) 
-                ? sender.GetString() ?? "User" 
-                : "User";
-            var chatId = requestBody.TryGetProperty("chat_id", out var chat) 
-                ? chat.GetString() 
-                : null;
+            if (request == null || string.IsNullOrEmpty(request.Command))
+            {
+                return BadRequest(new { error = "Command is required" });
+            }
 
-            var result = await _redmineBotService.ProcessMessageAsync(command!, senderName);
+            var senderName = request.Sender ?? "User";
             
-            _logger.LogInformation($"{DateTime.UtcNow} End Send Command {result}");
+            _logger.LogInformation($"Command: {request.Command}, Sender: {senderName}");
+
+            var result = await _redmineBotService.ProcessMessageAsync(request.Command, senderName);
+            
+            _logger.LogInformation($"{DateTime.UtcNow} End Send Command");
             return Accepted(new { result = "accepted", response = result });
         }
         catch (Exception ex)
         {
-            _logger.LogError($"{DateTime.UtcNow} ERROR Send Command {ex}");
+            _logger.LogError($"{DateTime.UtcNow} ERROR Send Command: {ex.Message}");
             return StatusCode(500, new { error = ex.Message });
-        }
-    }
-
-    private async Task<string> GetBotChatAsync(string userHuid, Dictionary<string, string> headers)
-    {
-        try
-        {
-            _logger.LogInformation($"{DateTime.UtcNow} Getting bot chat for user: {userHuid}");
-
-            using var client = new HttpClient();
-            
-            var jwt = headers.GetValueOrDefault("authorization", "");
-            if (jwt.StartsWith("Bearer "))
-            {
-                jwt = jwt.Substring(7);
-            }
-
-            var url = $"https://x.ar-management.ru/api/v1/botx/chats/personal?user_huid={userHuid}";
-            
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("Authorization", $"Bearer {jwt}");
-
-            var response = await client.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
-
-            _logger.LogInformation($"{DateTime.UtcNow} Bot chat response: {content}");
-            
-            return content;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"{DateTime.UtcNow} ERROR GetBotChat: {ex}");
-            throw;
         }
     }
 }

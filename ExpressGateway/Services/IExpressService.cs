@@ -7,6 +7,7 @@ public interface IExpressService
     Task<SendMessageResponse> SendMessageAsync(string chatId, string message, string? asset = null);
     Task<List<IncomingMessage>> GetNewMessagesAsync(string chatId, DateTime? since = null);
     Task<PingResponse> PingAsync();
+    Task<string> GetBotChatAsync(string userHuid);
 }
 
 public class ChatInfo

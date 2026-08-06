@@ -60,8 +60,6 @@ builder.Services.AddHttpClient<IRedmineService, RedmineService>();
 builder.Services.AddScoped<IExpressService, ExpressService>();
 builder.Services.AddScoped<RedmineBotService>();
 builder.Services.AddScoped<IRedmineService, RedmineService>();
-builder.Services.AddScoped<MessageProcessorService>();
-builder.Services.AddHostedService<MessagePollingService>();
 builder.Services.AddScoped<IRedmineBotService, RedmineBotService>();
 
 var app = builder.Build();

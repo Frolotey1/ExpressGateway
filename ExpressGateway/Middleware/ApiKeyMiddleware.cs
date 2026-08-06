@@ -73,11 +73,13 @@ public class ApiKeyMiddleware
         var lowerPath = path.ToLowerInvariant();
         
         return lowerPath.StartsWith("/swagger") ||
-               lowerPath.StartsWith("/health") ||
-               lowerPath == "/" ||
-               lowerPath.StartsWith("/info") ||
-               lowerPath.StartsWith("/api/messenger/health") ||
-               lowerPath.StartsWith("/api/messenger/status") ||
-               lowerPath.StartsWith("/api/messenger/command");
+            lowerPath.StartsWith("/health") ||
+            lowerPath == "/" ||
+            lowerPath.StartsWith("/info") ||
+            lowerPath.StartsWith("/api/messenger/health") ||
+            lowerPath.StartsWith("/api/messenger/status") ||
+            lowerPath.StartsWith("/api/messenger/command") ||
+            lowerPath.StartsWith("/api/webhook/express") ||  
+            lowerPath.StartsWith("/api/webhook/test");      
     }
 }

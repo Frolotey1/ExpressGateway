@@ -98,6 +98,40 @@ public class ExpressService : IExpressService
         }
     }
 
+    public async Task<string> GetBotChatAsync(string userHuid)
+    {
+        try
+        {
+            _logger.LogInformation("Getting bot chat for user: {UserHuid}", userHuid);
+            
+            var jwtToken = await GetJwtTokenAsync();
+            
+            var url = $"/api/v1/botx/chats/personal?user_huid={userHuid}";
+            
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("Authorization", $"Bearer {jwtToken}");
+            
+            var response = await _httpClient.SendAsync(request);
+            var content = await response.Content.ReadAsStringAsync();
+            
+            _logger.LogInformation("Bot chat response: {Response}", content);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to get bot chat: {StatusCode} - {Content}", 
+                    response.StatusCode, content);
+                return content;
+            }
+            
+            return content;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get bot chat for user: {UserHuid}", userHuid);
+            throw;
+        }
+    }
+
     public async Task<SendMessageResponse> SendMessageAsync(string chatId, string message, string? asset = null)
     {
         try
