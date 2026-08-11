@@ -460,4 +460,25 @@ public class RedmineBotService : IRedmineBotService
 
     public async Task<string> GetGreetingAsync(string? userName = null)
         => $"{TimeToFrase()}! {userName ?? "Добро пожаловать"}!";
+
+    public async Task<List<CommandInfo>> GetAvailableCommandsAsync()
+    {
+        return new List<CommandInfo>
+        {
+            new CommandInfo { Name = "Help", Description = "Помощь", Body = "/help" },
+            new CommandInfo { Name = "Start", Description = "Начать работу", Body = "/start" },
+            new CommandInfo { Name = "Stop", Description = "Завершить сессию", Body = "/stop" },
+            new CommandInfo { Name = "Status", Description = "Статус заявки", Body = "/status [номер]" },
+            new CommandInfo { Name = "Issues", Description = "Список заявок", Body = "/issues" },
+            new CommandInfo { Name = "Create Issue", Description = "Создать заявку", Body = "/create_issue [тема] [описание]" },
+            new CommandInfo { Name = "Custom Fields", Description = "Кастомные поля", Body = "/custom_fields" },
+            new CommandInfo { Name = "Issue Direction", Description = "Направление заявки", Body = "/issue_direction" },
+            new CommandInfo { Name = "Add Direction", Description = "Добавить направление", Body = "/add_direction [направление]" },
+            new CommandInfo { Name = "Choise", Description = "Выбор", Body = "/choise" },
+            new CommandInfo { Name = "Add Attachment", Description = "Добавить вложение", Body = "/add_attachment" },
+            new CommandInfo { Name = "Get Custom Field", Description = "Получить кастомное поле", Body = "/get_custom_field [id]" },
+            new CommandInfo { Name = "Create Issue Custom Fields", Description = "Создать с кастомными полями", Body = "/create_issue_custom_fields [id] [значение]" },
+            new CommandInfo { Name = "Status With Token", Description = "Статус с токеном", Body = "/status_with_token" }
+        };
+    }
 }

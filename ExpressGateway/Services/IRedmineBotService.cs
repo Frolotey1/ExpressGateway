@@ -1,3 +1,4 @@
+using ExpressGateway.Models;
 public interface IRedmineBotService
 {
     Task<string> ProcessMessageAsync(string message, string senderName);
@@ -6,4 +7,5 @@ public interface IRedmineBotService
     Task<string> GetUserIssuesAsync(string? city = null, string? department = null);
     Task<string> GetHelpAsync();
     Task<string> GetGreetingAsync(string? userName = null);
+    Task<List<CommandInfo>> GetAvailableCommandsAsync();
 }

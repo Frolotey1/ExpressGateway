@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ExpressGateway")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7e2a1c20404078ba5da21d9d2c208fe868f73338")]
 [assembly: System.Reflection.AssemblyProductAttribute("ExpressGateway")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ExpressGateway")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
