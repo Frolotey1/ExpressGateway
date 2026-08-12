@@ -196,63 +196,95 @@ public class MessengerController : ControllerBase
     }
 
     [HttpPost("command")]
-    public async Task<IActionResult> SendCommand([FromBody] CommandRequest request)
+    public async Task<IActionResult> SendCommand([FromBody] JsonElement requestBody)
     {
         try
         {
-            _logger.LogInformation($"SendCommand called: Command='{request?.Command}', Sender='{request?.Sender}'");
+            _logger.LogInformation($"SendCommand called");
+            _logger.LogDebug($"Raw request: {requestBody.GetRawText()}");
 
-            if (request == null)
+            string? commandText = null;
+            string? senderName = "User";
+            string? syncId = null;
+            string? commandType = null;
+
+            if (requestBody.TryGetProperty("command", out var commandElement))
             {
-                return BadRequest(new { 
-                    status = "error", 
-                    error = "Invalid request body. Expected: { \"command\": \"/help\", \"sender\": \"User\" }" 
-                });
+                if (commandElement.ValueKind == JsonValueKind.String)
+                {
+                    commandText = commandElement.GetString();
+                    _logger.LogInformation($"Simple command format: {commandText}");
+                }
+                else if (commandElement.ValueKind == JsonValueKind.Object)
+                {
+                    if (commandElement.TryGetProperty("body", out var bodyElement))
+                    {
+                        commandText = bodyElement.GetString();
+                        _logger.LogInformation($"Express command format: {commandText}");
+                    }
+                    
+                    if (commandElement.TryGetProperty("command_type", out var typeElement))
+                    {
+                        commandType = typeElement.GetString();
+                    }
+                    
+                    if (commandElement.TryGetProperty("data", out var dataElement))
+                    {
+                        _logger.LogDebug($"Command data: {dataElement.GetRawText()}");
+                    }
+                }
             }
 
-            if (string.IsNullOrEmpty(request.Command))
+            if (requestBody.TryGetProperty("sender", out var senderElement))
             {
-                return BadRequest(new { 
-                    status = "error", 
+                senderName = senderElement.GetString() ?? "User";
+            }
+
+            if (requestBody.TryGetProperty("sync_id", out var syncElement))
+            {
+                syncId = syncElement.GetString();
+            }
+
+            if (string.IsNullOrEmpty(commandText))
+            {
+                _logger.LogWarning($"No command found in request");
+                return BadRequest(new 
+                { 
                     error = "Command is required",
-                    example = new { command = "/help", sender = "User" }
+                    hint = "Simple format: { 'command': '/help' } or Express format: { 'command': { 'body': '/help' } }",
+                    received = requestBody.GetRawText()
                 });
             }
 
-            var senderName = string.IsNullOrEmpty(request.Sender) ? "User" : request.Sender;
+            _logger.LogInformation($"Command: {commandText}, Type: {commandType ?? "unknown"}, Sender: {senderName}, SyncId: {syncId ?? "null"}");
 
-            _logger.LogInformation($"Processing command: '{request.Command}' from sender: '{senderName}'");
+            var response = await _redmineBotService.ProcessMessageAsync(commandText, senderName);
 
-            var response = await _redmineBotService.ProcessMessageAsync(request.Command, senderName);
-
-            _logger.LogInformation($"Command processed successfully. Response length: {response?.Length ?? 0}");
+            _logger.LogInformation($"Command processed successfully");
 
             return Ok(new
             {
                 status = "ok",
                 result = new
                 {
-                    command = request.Command,
+                    command = commandText,
                     sender = senderName,
-                    response = response
+                    response = response,
+                    sync_id = syncId,
+                    command_type = commandType
                 }
             });
         }
         catch (Exception ex)
         {
             _logger.LogError($"SendCommand error: {ex.Message}");
-            _logger.LogError($"Stack trace: {ex.StackTrace}");
+            _logger.LogError($"Raw request: {requestBody.GetRawText()}");
             
             return StatusCode(500, new 
             { 
                 status = "error", 
                 error = ex.Message,
-                result = new
-                {
-                    command = request?.Command,
-                    sender = request?.Sender ?? "Unknown",
-                    response = $"Ошибка: {ex.Message}"
-                }
+                raw_request = requestBody.GetRawText()
             });
         }
     }
