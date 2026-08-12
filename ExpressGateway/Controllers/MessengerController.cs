@@ -200,28 +200,32 @@ public class MessengerController : ControllerBase
     {
         try
         {
-            _logger.LogInformation($"SendCommand called: Command={request?.Command}, Sender={request?.Sender}");
+            _logger.LogInformation($"SendCommand called: Command='{request?.Command}', Sender='{request?.Sender}'");
 
             if (request == null)
             {
-                return BadRequest(new { error = "Invalid request body" });
+                return BadRequest(new { 
+                    status = "error", 
+                    error = "Invalid request body. Expected: { \"command\": \"/help\", \"sender\": \"User\" }" 
+                });
             }
 
             if (string.IsNullOrEmpty(request.Command))
             {
                 return BadRequest(new { 
+                    status = "error", 
                     error = "Command is required",
                     example = new { command = "/help", sender = "User" }
                 });
             }
 
-            var senderName = request.Sender ?? "User";
+            var senderName = string.IsNullOrEmpty(request.Sender) ? "User" : request.Sender;
 
-            _logger.LogInformation($"Processing command: {request.Command}, Sender: {senderName}");
+            _logger.LogInformation($"Processing command: '{request.Command}' from sender: '{senderName}'");
 
             var response = await _redmineBotService.ProcessMessageAsync(request.Command, senderName);
 
-            _logger.LogInformation($"Command processed successfully");
+            _logger.LogInformation($"Command processed successfully. Response length: {response?.Length ?? 0}");
 
             return Ok(new
             {
@@ -237,7 +241,7 @@ public class MessengerController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError($"SendCommand error: {ex.Message}");
-            _logger.LogError(ex.StackTrace);
+            _logger.LogError($"Stack trace: {ex.StackTrace}");
             
             return StatusCode(500, new 
             { 
@@ -246,7 +250,7 @@ public class MessengerController : ControllerBase
                 result = new
                 {
                     command = request?.Command,
-                    sender = request?.Sender,
+                    sender = request?.Sender ?? "Unknown",
                     response = $"Ошибка: {ex.Message}"
                 }
             });

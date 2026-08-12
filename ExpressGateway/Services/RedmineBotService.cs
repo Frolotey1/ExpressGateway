@@ -1,4 +1,3 @@
-// Services/Redmine/RedmineBotService.cs
 using ExpressGateway.Services.Redmine.Models;
 
 namespace ExpressGateway.Services.Redmine;
@@ -7,21 +6,31 @@ public class RedmineBotService : IRedmineBotService
 {
     private readonly IRedmineService _redmineService;
     private readonly ILogger<RedmineBotService> _logger;
+    private readonly IConfiguration _configuration;
     private readonly Dictionary<string, Func<string[], Task<string>>> _commands;
     private readonly Dictionary<string, string> _userStates = new();
     private readonly Dictionary<string, DateTime> _blockedUsers = new();
     private readonly Dictionary<string, int> _errorCount = new();
     private readonly Dictionary<string, string> _sessions = new();
     private readonly Dictionary<string, object> _sessionData = new();
+    private readonly string _projectIdentifier;
+    private readonly bool _isDevelopment;
     private const int BlockTimeSeconds = 600;
     private const int InactivityTimerSeconds = 120;
 
     public RedmineBotService(
         IRedmineService redmineService,
-        ILogger<RedmineBotService> logger)
+        ILogger<RedmineBotService> logger,
+        IConfiguration configuration)
     {
         _redmineService = redmineService;
         _logger = logger;
+        _configuration = configuration;
+
+        _projectIdentifier = _configuration["RedmineSettings:ProjectIdentifier"] ?? "req";
+        _isDevelopment = configuration.GetValue<bool>("IsDevelopment", false);
+
+        _logger.LogInformation($"RedmineBotService initialized. Project: {_projectIdentifier}, IsDevelopment: {_isDevelopment}");
 
         _commands = new Dictionary<string, Func<string[], Task<string>>>
         {
@@ -40,6 +49,12 @@ public class RedmineBotService : IRedmineBotService
             ["/get_custom_field"] = HandleGetCustomFieldAsync,
             ["/create_issue_custom_fields"] = HandleCreateIssueCustomFieldsAsync
         };
+
+        if (_isDevelopment)
+        {
+            _commands["/create_test_issue"] = HandleCreateTestIssueAsync;
+            _logger.LogInformation("Test command '/create_test_issue' enabled (Development mode)");
+        }
     }
 
     public async Task<string> ProcessMessageAsync(string message, string senderName)
@@ -79,6 +94,7 @@ public class RedmineBotService : IRedmineBotService
             return $"Произошла ошибка: {ex.Message}";
         }
     }
+
     private string GetTimeOfDay()
     {
         var hour = DateTime.Now.Hour;
@@ -97,9 +113,9 @@ public class RedmineBotService : IRedmineBotService
     {
         try
         {
-            var project = await _redmineService.GetProjectAsync("req");
+            var project = await _redmineService.GetProjectAsync(_projectIdentifier);
             if (project == null)
-                return "Не удалось найти проект для создания заявки.";
+                return $"Не удалось найти проект '{_projectIdentifier}' для создания заявки.";
 
             var issue = new RedmineIssue
             {
@@ -117,13 +133,49 @@ public class RedmineBotService : IRedmineBotService
             }
 
             var created = await _redmineService.CreateIssueAsync(issue);
-            return $"Заявка успешно создана! Номер вашей заявки: {created.Id}";
+            return $"Заявка успешно создана! Номер: {created.Id}";
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to create issue");
             return $"Ошибка создания заявки: {ex.Message}";
         }
+    }
+    private async Task<string> CreateTestIssueAsync(string subject, string description)
+    {
+        try
+        {
+            _logger.LogInformation($"Creating test issue: {subject} - {description}");
+            
+            var fakeId = new Random().Next(1000, 9999);
+            var fakeDate = DateTime.Now.ToString("dd.MM.yyyy HH:mm");
+            
+            return $"ТЕСТОВАЯ ЗАЯВКА\n" +
+                   $"─────────────────────\n" +
+                   $"Номер: {fakeId}\n" +
+                   $"Тема: {subject}\n" +
+                   $"Описание: {description}\n" +
+                   $"Создана: {fakeDate}\n" +
+                   $"Статус: Новая\n" +
+                   $"─────────────────────\n" +
+                   $"Тестовый режим. Заявка НЕ создана в Redmine.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create test issue");
+            return $"Ошибка создания тестовой заявки: {ex.Message}";
+        }
+    }
+
+    private async Task<string> HandleCreateTestIssueAsync(string[] args)
+    {
+        if (args.Length < 2)
+            return "Используйте: /create_test_issue [тема] [описание]";
+
+        var subject = args[0];
+        var description = string.Join(" ", args.Skip(1));
+        
+        return await CreateTestIssueAsync(subject, description);
     }
 
     private void StartInactivityTimer(string senderName)
@@ -173,6 +225,7 @@ public class RedmineBotService : IRedmineBotService
         if (_errorCount[senderName] >= 3)
             _ = BlockUserAsync(senderName);
     }
+
     private async Task<string> HandleStartAsync(string[] args)
     {
         var senderName = args.Length > 0 ? args[0] : "default";
@@ -182,23 +235,31 @@ public class RedmineBotService : IRedmineBotService
         _sessions.Remove(senderName);
 
         var greeting = TimeToFrase();
-        return $"{greeting}! Приветствую!\n\n" +
-               "Доступные команды:\n" +
-               "/start - начать работу\n" +
-               "/stop - завершить сессию\n" +
-               "/help - показать справку\n" +
-               "/status [номер] - статус заявки\n" +
-               "/status_with_token - статус с токеном\n" +
-               "/issues - список ваших заявок\n" +
-               "/create_issue - создать новую заявку\n" +
-               "/custom_fields - кастомные поля\n" +
-               "/issue_direction - направление заявки\n" +
-               "/add_direction - добавить направление\n" +
-               "/choise - выбор\n" +
-               "/add_attachment - добавить вложение\n" +
-               "/get_custom_field - получить кастомное поле\n" +
-               "/create_issue_custom_fields - создать кастомное поле";
+        
+        var commands = "Доступные команды:\n" +
+                       "/start - начать работу\n" +
+                       "/stop - завершить сессию\n" +
+                       "/help - показать справку\n" +
+                       "/status [номер] - статус заявки\n" +
+                       "/status_with_token - статус с токеном\n" +
+                       "/issues - список ваших заявок\n" +
+                       "/create_issue - создать новую заявку\n" +
+                       "/custom_fields - кастомные поля\n" +
+                       "/issue_direction - направление заявки\n" +
+                       "/add_direction - добавить направление\n" +
+                       "/choise - выбор\n" +
+                       "/add_attachment - добавить вложение\n" +
+                       "/get_custom_field - получить кастомное поле\n" +
+                       "/create_issue_custom_fields - создать кастомное поле";
+
+        if (_isDevelopment)
+        {
+            commands += "\n/create_test_issue - создать ТЕСТОВУЮ заявку (только для разработки)";
+        }
+
+        return $"{greeting}! Приветствую!\n\n{commands}";
     }
+
     private async Task<string> HandleStopAsync(string[] args)
     {
         var senderName = args.Length > 0 ? args[0] : "default";
@@ -208,24 +269,32 @@ public class RedmineBotService : IRedmineBotService
         _sessions.Remove(senderName);
         return "До свидания!";
     }
+
     private async Task<string> HandleHelpAsync(string[] args)
     {
-        return "Доступные команды:\n" +
-               "/start - начать работу\n" +
-               "/stop - завершить сессию\n" +
-               "/help - показать эту справку\n" +
-               "/status [номер] - статус заявки\n" +
-               "/status_with_token - статус с токеном\n" +
-               "/issues - список ваших заявок\n" +
-               "/create_issue - создать новую заявку\n" +
-               "/custom_fields - кастомные поля\n" +
-               "/issue_direction - направление заявки\n" +
-               "/add_direction - добавить направление\n" +
-               "/choise - выбор\n" +
-               "/add_attachment - добавить вложение\n" +
-               "/get_custom_field - получить кастомное поле\n" +
-               "/create_issue_custom_fields - создать кастомное поле";
+        var commands = "/start - начать работу\n" +
+                       "/stop - завершить сессию\n" +
+                       "/help - показать эту справку\n" +
+                       "/status [номер] - статус заявки\n" +
+                       "/status_with_token - статус с токеном\n" +
+                       "/issues - список ваших заявок\n" +
+                       "/create_issue - создать новую заявку\n" +
+                       "/custom_fields - кастомные поля\n" +
+                       "/issue_direction - направление заявки\n" +
+                       "/add_direction - добавить направление\n" +
+                       "/choise - выбор\n" +
+                       "/add_attachment - добавить вложение\n" +
+                       "/get_custom_field - получить кастомное поле\n" +
+                       "/create_issue_custom_fields - создать кастомное поле";
+
+        if (_isDevelopment)
+        {
+            commands += "\n/create_test_issue - создать ТЕСТОВУЮ заявку (только для разработки)";
+        }
+
+        return "Доступные команды:\n" + commands;
     }
+
     private async Task<string> HandleStatusAsync(string[] args)
     {
         if (args.Length == 0)
@@ -236,6 +305,7 @@ public class RedmineBotService : IRedmineBotService
 
         return "Пожалуйста, укажите номер заявки: /status 12345";
     }
+
     private async Task<string> HandleStatusWithTokenAsync(string[] args)
     {
         var senderName = args.Length > 0 ? args[0] : "default";
@@ -243,12 +313,18 @@ public class RedmineBotService : IRedmineBotService
             return "Введите номер заявки в формате 98765432121 (только цифры)";
         return "Для начала выполните /status";
     }
+
     private async Task<string> HandleIssuesAsync(string[] args)
     {
         try
         {
+            _logger.LogInformation("Getting issues from Redmine...");
+            
             var issues = await _redmineService.GetIssuesAsync();
-            if (!issues.Any())
+            
+            _logger.LogInformation($"Found {issues?.Count ?? 0} issues");
+            
+            if (issues == null || !issues.Any())
                 return "У вас нет активных заявок.";
 
             var result = $"Ваши заявки ({issues.Count}):\n─────────────────────\n";
@@ -260,20 +336,27 @@ public class RedmineBotService : IRedmineBotService
         }
         catch (Exception ex)
         {
-            return $"Ошибка: {ex.Message}";
+            _logger.LogError(ex, "Error getting issues");
+            return $"Ошибка получения заявок: {ex.Message}";
         }
     }
+
     private async Task<string> HandleCreateIssueAsync(string[] args)
     {
         if (args.Length < 2)
             return "Используйте: /create_issue [тема] [описание]";
-        return await CreateIssueAsync(args[0], string.Join(" ", args.Skip(1)));
+
+        var subject = args[0];
+        var description = string.Join(" ", args.Skip(1));
+        
+        return await CreateIssueAsync(subject, description);
     }
+
     private async Task<string> HandleCustomFieldsAsync(string[] args)
     {
         try
         {
-            var fields = await _redmineService.GetCustomFieldsAsync("req");
+            var fields = await _redmineService.GetCustomFieldsAsync(_projectIdentifier);
             if (!fields.Any())
                 return "Кастомные поля не найдены.";
             var result = "Доступные кастомные поля:\n─────────────────────\n";
@@ -286,11 +369,12 @@ public class RedmineBotService : IRedmineBotService
             return $"Ошибка: {ex.Message}";
         }
     }
+
     private async Task<string> HandleIssueDirectionAsync(string[] args)
     {
         try
         {
-            var categories = await _redmineService.GetIssueCategoriesAsync("req");
+            var categories = await _redmineService.GetIssueCategoriesAsync(_projectIdentifier);
             if (!categories.Any())
                 return "Категории не найдены.";
             var result = "Выберите направление:\n─────────────────────\n";
@@ -303,6 +387,7 @@ public class RedmineBotService : IRedmineBotService
             return $"Ошибка: {ex.Message}";
         }
     }
+
     private async Task<string> HandleAddDirectionAsync(string[] args)
     {
         if (args.Length == 0)
@@ -311,14 +396,17 @@ public class RedmineBotService : IRedmineBotService
         _sessionData[senderName + "_direction"] = args[0];
         return $"Направление {args[0]} выбрано. Отправить заявку?";
     }
+
     private async Task<string> HandleChoiseAsync(string[] args)
     {
         return "Добавить дополнительные сведения?";
     }
+
     private async Task<string> HandleAddAttachmentAsync(string[] args)
     {
         return "Загрузите файл для прикрепления к заявке.";
     }
+
     private async Task<string> HandleGetCustomFieldAsync(string[] args)
     {
         if (args.Length == 0)
@@ -327,7 +415,7 @@ public class RedmineBotService : IRedmineBotService
             return "Введите числовой ID";
         try
         {
-            var fields = await _redmineService.GetCustomFieldsAsync("req");
+            var fields = await _redmineService.GetCustomFieldsAsync(_projectIdentifier);
             var field = fields.FirstOrDefault(f => f.Id == id);
             return field != null 
                 ? $"Поле: {field.Name}\nID: {field.Id}\nФормат: {field.FieldFormat}\nОбязательное: {field.IsRequired}"
@@ -338,6 +426,7 @@ public class RedmineBotService : IRedmineBotService
             return $"Ошибка: {ex.Message}";
         }
     }
+
     private async Task<string> HandleCreateIssueCustomFieldsAsync(string[] args)
     {
         if (args.Length < 2)
@@ -347,6 +436,7 @@ public class RedmineBotService : IRedmineBotService
         var value = string.Join(" ", args.Skip(1));
         return $"Кастомное поле {id} установлено в: {value}";
     }
+
     private async Task<string> HandleStateAsync(string state, string input, string userName)
     {
         switch (state)
@@ -387,6 +477,7 @@ public class RedmineBotService : IRedmineBotService
         _userStates.Remove(userName);
         return "Состояние сброшено. Напишите /help для списка команд.";
     }
+
     private async Task<string> HandleMessageAsync(string message, string senderName)
     {
         var lower = message.ToLower();
@@ -406,6 +497,7 @@ public class RedmineBotService : IRedmineBotService
                 return "Возможно вы имели ввиду?\n/start - начать работу\n/help - показать справку\n/status [номер] - статус заявки\n/issues - список ваших заявок\n/create_issue - создать новую заявку\n/stop - завершить сессию";
         }
     }
+
     private async Task<string> HandleUnknownCommandAsync(string[] args, string senderName)
     {
         IncrementErrorCount(senderName);
@@ -413,6 +505,7 @@ public class RedmineBotService : IRedmineBotService
             return $"Вы заблокированы на {BlockTimeSeconds / 60} минут";
         return "Неизвестная команда. Напишите /help для списка доступных команд.";
     }
+
     public async Task<string> GetIssueStatusAsync(int issueId)
     {
         try
@@ -431,8 +524,9 @@ public class RedmineBotService : IRedmineBotService
     {
         try
         {
-            var project = await _redmineService.GetProjectAsync("req");
-            if (project == null) return "Не удалось найти проект для создания заявки.";
+            var project = await _redmineService.GetProjectAsync(_projectIdentifier);
+            if (project == null) 
+                return $"Не удалось найти проект '{_projectIdentifier}' для создания заявки.";
 
             var issue = new RedmineIssue
             {
@@ -449,6 +543,7 @@ public class RedmineBotService : IRedmineBotService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to create issue");
             return $"Ошибка: {ex.Message}";
         }
     }
@@ -463,7 +558,7 @@ public class RedmineBotService : IRedmineBotService
 
     public async Task<List<CommandInfo>> GetAvailableCommandsAsync()
     {
-        return new List<CommandInfo>
+        var commands = new List<CommandInfo>
         {
             new CommandInfo { Name = "Help", Description = "Помощь", Body = "/help" },
             new CommandInfo { Name = "Start", Description = "Начать работу", Body = "/start" },
@@ -480,5 +575,17 @@ public class RedmineBotService : IRedmineBotService
             new CommandInfo { Name = "Create Issue Custom Fields", Description = "Создать с кастомными полями", Body = "/create_issue_custom_fields [id] [значение]" },
             new CommandInfo { Name = "Status With Token", Description = "Статус с токеном", Body = "/status_with_token" }
         };
+
+        if (_isDevelopment)
+        {
+            commands.Add(new CommandInfo 
+            { 
+                Name = "Create Test Issue (DEV)", 
+                Description = "Создать ТЕСТОВУЮ заявку (только для разработки)", 
+                Body = "/create_test_issue [тема] [описание]" 
+            });
+        }
+
+        return commands;
     }
 }
