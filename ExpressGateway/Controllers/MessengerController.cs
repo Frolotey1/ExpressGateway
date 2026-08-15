@@ -227,7 +227,7 @@ public class MessengerController : ControllerBase
                     {
                         commandType = typeElement.GetString();
                     }
-                    
+
                     if (commandElement.TryGetProperty("data", out var dataElement))
                     {
                         _logger.LogDebug($"Command data: {dataElement.GetRawText()}");
@@ -250,9 +250,9 @@ public class MessengerController : ControllerBase
                 _logger.LogWarning($"No command found in request");
                 return BadRequest(new 
                 { 
+                    status = "error",
                     error = "Command is required",
-                    hint = "Simple format: { 'command': '/help' } or Express format: { 'command': { 'body': '/help' } }",
-                    received = requestBody.GetRawText()
+                    hint = "Simple format: { 'command': '/help' } or Express format: { 'command': { 'body': '/help' } }"
                 });
             }
 
@@ -265,13 +265,21 @@ public class MessengerController : ControllerBase
             return Ok(new
             {
                 status = "ok",
+                message = "Команда получена и обработана",
                 result = new
                 {
                     command = commandText,
                     sender = senderName,
-                    response = response,
+                    response = response,       
                     sync_id = syncId,
-                    command_type = commandType
+                    command_type = commandType,
+                    feedback = new
+                    {
+                        received = true,
+                        received_at = DateTime.UtcNow,
+                        processed = true,
+                        processed_at = DateTime.UtcNow
+                    }
                 }
             });
         }
@@ -283,8 +291,8 @@ public class MessengerController : ControllerBase
             return StatusCode(500, new 
             { 
                 status = "error", 
-                error = ex.Message,
-                raw_request = requestBody.GetRawText()
+                message = "Ошибка при обработке команды",
+                error = ex.Message
             });
         }
     }

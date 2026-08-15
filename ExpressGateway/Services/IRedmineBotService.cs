@@ -1,4 +1,3 @@
-using ExpressGateway.Models;
 public interface IRedmineBotService
 {
     Task<string> ProcessMessageAsync(string message, string senderName);

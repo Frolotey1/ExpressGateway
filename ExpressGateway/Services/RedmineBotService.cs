@@ -107,7 +107,6 @@ public class RedmineBotService : IRedmineBotService
             _ => "Здравствуйте"
         };
     }
-
     private string TimeToFrase() => GetTimeOfDay();
     public async Task<string> CreateIssueAsync(string subject, string description, string? categoryId = null)
     {
